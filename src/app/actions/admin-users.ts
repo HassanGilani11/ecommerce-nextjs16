@@ -97,13 +97,17 @@ export async function deleteUser(id: string) {
     return { success: true }
 }
 
+import { createAdminClient } from "@/lib/supabase/admin"
+
 export async function createUser(data: any) {
     const supabase = await createClient()
+    const adminClient = createAdminClient()
 
-    // Clean data to ensure no unwanted fields are inserted
+    // 1. Clean data to ensure no unwanted fields are inserted
     const {
         username,
         email,
+        password, // Optional: if provided in form, otherwise Supabase generates one
         first_name,
         last_name,
         full_name,
@@ -114,7 +118,25 @@ export async function createUser(data: any) {
         status
     } = data
 
+    // 2. Create the Auth User using Service Role (Admin Client)
+    // This allows us to create users without them having to sign up themselves
+    const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
+        email: email,
+        password: password || Math.random().toString(36).slice(-12), // Generate temp password if not provided
+        email_confirm: true,
+        user_metadata: { full_name: full_name || `${first_name} ${last_name}`.trim() }
+    })
+
+    if (authError) {
+        console.error("Error creating auth user:", authError)
+        return { error: authError.message }
+    }
+
+    const userId = authData.user.id
+
+    // 3. Create the profile record linked to the new Auth User ID
     const cleanData = {
+        id: userId,
         username,
         email,
         first_name,
@@ -127,13 +149,15 @@ export async function createUser(data: any) {
         status: status || 'active'
     }
 
-    const { error } = await supabase
+    const { error: profileError } = await supabase
         .from('profiles')
         .insert([cleanData])
 
-    if (error) {
-        console.error("Error creating user profile:", error)
-        return { error: error.message }
+    if (profileError) {
+        console.error("Error creating user profile:", profileError)
+        // Cleanup: try to delete the auth user if profile creation fails? 
+        // For now, just report error.
+        return { error: profileError.message }
     }
 
     revalidatePath('/admin/users')

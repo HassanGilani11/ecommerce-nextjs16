@@ -312,7 +312,9 @@ export default function AddUserPage() {
                                     </SelectTrigger>
                                     <SelectContent className="rounded-2xl border-zinc-100 shadow-2xl">
                                         <SelectItem value="admin" className="rounded-xl">Administrator</SelectItem>
+                                        <SelectItem value="editor" className="rounded-xl">Editor</SelectItem>
                                         <SelectItem value="moderator" className="rounded-xl">Moderator</SelectItem>
+                                        <SelectItem value="author" className="rounded-xl">Author</SelectItem>
                                         <SelectItem value="customer" className="rounded-xl">Customer</SelectItem>
                                     </SelectContent>
                                 </Select>
