@@ -103,12 +103,92 @@ export default function AddProductPage() {
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Header omitted for brevity */}
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <Link href="/admin/products">
+                        <Button variant="ghost" size="icon" className="rounded-2xl hover:bg-white shadow-sm border border-transparent hover:border-zinc-100 transition-all">
+                            <ArrowLeft className="h-5 w-5" />
+                        </Button>
+                    </Link>
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tighter">Add Product</h1>
+                        <p className="text-zinc-500 text-sm">Create a brand new product for your shop.</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    <Link href="/admin/products">
+                        <Button variant="ghost" className="rounded-2xl h-11 px-6 font-bold uppercase tracking-widest text-[11px]">
+                            Discard
+                        </Button>
+                    </Link>
+                    <Button
+                        onClick={handleSave}
+                        disabled={isPending}
+                        className="rounded-2xl h-11 px-6 font-bold uppercase tracking-widest text-[11px] gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                    >
+                        {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                        Save Product
+                    </Button>
+                </div>
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Main Form Area */}
                 <div className="lg:col-span-2 space-y-8">
-                    {/* General Information omitted */}
+                    {/* General Information */}
+                    <Card className="border-none shadow-sm rounded-[2rem] bg-white overflow-hidden">
+                        <CardHeader className="border-b border-zinc-50 px-8 py-4">
+                            <div className="flex items-center gap-3">
+                                <div className="h-8 w-8 rounded-xl bg-zinc-900 flex items-center justify-center">
+                                    <Info className="h-4 w-4 text-white" />
+                                </div>
+                                <CardTitle className="text-lg font-bold">General Information</CardTitle>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="px-8 pb-8 pt-4 space-y-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="title" className="text-xs font-bold uppercase tracking-widest text-zinc-500 ml-1">Product Title <span className="text-red-500">*</span></Label>
+                                <Input
+                                    id="title"
+                                    value={title}
+                                    onChange={(e) => setTitle(e.target.value)}
+                                    placeholder="e.g. Classic Silk Shirt"
+                                    className="h-12 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-1 focus-visible:ring-zinc-200"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="slug" className="text-xs font-bold uppercase tracking-widest text-zinc-500 ml-1">Slug</Label>
+                                <div className="relative">
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                                        <Tag className="h-3.5 w-3.5 text-zinc-400" />
+                                    </div>
+                                    <Input
+                                        id="slug"
+                                        value={slug}
+                                        onChange={(e) => setSlug(e.target.value)}
+                                        placeholder="classic-silk-shirt"
+                                        className="h-12 pl-11 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-1 focus-visible:ring-zinc-200"
+                                    />
+                                </div>
+                                <p className="text-[10px] text-zinc-400 font-medium px-2 italic">
+                                    The slug is used for the product URL. Use only lowercase and hyphens.
+                                </p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="description" className="text-xs font-bold uppercase tracking-widest text-zinc-500 ml-1">Description</Label>
+                                <Textarea
+                                    id="description"
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    placeholder="Detailed description of the product..."
+                                    className="min-h-[160px] rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-1 focus-visible:ring-zinc-200 resize-none p-4"
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
 
                     {/* Product Media */}
                     <Card className="border-none shadow-sm rounded-[2rem] bg-white overflow-hidden">
@@ -352,14 +432,17 @@ export default function AddProductPage() {
 
             {/* Bottom Actions for Mobile */}
             <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t flex gap-4 z-50">
-                <Button variant="outline" className="flex-1 h-12 rounded-2xl font-bold uppercase tracking-widest text-[11px]">
-                    Discard
-                </Button>
+                <Link href="/admin/products" className="flex-1">
+                    <Button variant="outline" className="w-full h-12 rounded-2xl font-bold uppercase tracking-widest text-[11px]">
+                        Discard
+                    </Button>
+                </Link>
                 <Button
                     onClick={handleSave}
                     disabled={isPending}
                     className="flex-1 h-12 rounded-2xl font-bold uppercase tracking-widest text-[11px] shadow-lg shadow-primary/20"
                 >
+                    {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     {isPending ? "Saving..." : "Save Product"}
                 </Button>
             </div>

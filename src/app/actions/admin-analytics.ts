@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { startOfDay, endOfDay, subDays, format } from "date-fns"
 
 export async function getAnalyticsData(days: number = 7) {
@@ -18,18 +19,20 @@ export async function getAnalyticsData(days: number = 7) {
 
     if (profile?.role !== 'admin') return { error: "Unauthorized" }
 
+    const adminSupabase = createAdminClient()
+
     try {
         // 2. Summary Stats (Total Sales, Net Sales, Orders, Products Sold)
         // We filter summary stats by the selected days to keep them synced
         const startDate = startOfDay(subDays(new Date(), days - 1)).toISOString()
 
-        const { data: ordersData } = await supabase
+        const { data: ordersData } = await adminSupabase
             .from('orders')
             .select('total, subtotal, discount, status, created_at')
             .not('status', 'in', '("cancelled", "refunded", "archived")')
             .gte('created_at', startDate)
 
-        const { data: itemsData } = await supabase
+        const { data: itemsData } = await adminSupabase
             .from('order_items')
             .select('quantity, price, product_id, created_at, products(title, categories(name))')
             .gte('created_at', startDate)

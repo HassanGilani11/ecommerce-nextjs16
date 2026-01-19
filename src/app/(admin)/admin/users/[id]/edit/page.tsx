@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Save, User, Mail, Globe, Shield, Info, UserCheck, Loader2, MessageSquare, Upload } from "lucide-react"
+import { ArrowLeft, Save, User, Mail, Globe, Shield, Info, UserCheck, Loader2, MessageSquare, Upload, X, ImagePlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getUserById, updateUser, uploadAvatar } from "@/app/actions/admin-users"
 import { toast } from "sonner"
+import { MediaGalleryModal } from "@/components/admin/media-gallery-modal"
 
 export default function EditUserPage() {
     const params = useParams()
@@ -26,6 +27,7 @@ export default function EditUserPage() {
     const [saving, setSaving] = React.useState(false)
     const [uploading, setUploading] = React.useState(false)
     const fileInputRef = React.useRef<HTMLInputElement>(null)
+    const [isGalleryOpen, setIsGalleryOpen] = React.useState(false)
     const [formData, setFormData] = React.useState<any>({
         full_name: "",
         username: "",
@@ -92,7 +94,7 @@ export default function EditUserPage() {
             return
         }
         setSaving(true)
-        
+
         const result = await updateUser(params.id as string, formData)
 
         if (result.success) {
@@ -133,8 +135,8 @@ export default function EditUserPage() {
                             Cancel
                         </Button>
                     </Link>
-                    <Button 
-                        type="submit" 
+                    <Button
+                        type="submit"
                         disabled={saving || uploading}
                         className="rounded-2xl h-11 px-6 font-bold uppercase tracking-widest text-[11px] gap-2 shadow-lg shadow-black/5 hover:scale-[1.02] active:scale-95 transition-all"
                     >
@@ -192,45 +194,59 @@ export default function EditUserPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-4">
                                     <Label className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">Profile Avatar</Label>
-                                    <div className="flex items-center gap-4">
-                                        <div className="h-16 w-16 rounded-2xl bg-zinc-100 border border-zinc-200 overflow-hidden flex-shrink-0">
-                                            {formData.avatar_url ? (
-                                                <img src={formData.avatar_url} alt="Preview" className="h-full w-full object-cover" />
-                                            ) : (
-                                                <div className="h-full w-full flex items-center justify-center bg-zinc-900 text-white text-xs font-bold">
-                                                    {(formData.full_name || formData.username || 'U').charAt(0).toUpperCase()}
+                                    <div className="flex flex-col gap-4">
+                                        {formData.avatar_url ? (
+                                            <div className="group relative rounded-[2rem] overflow-hidden aspect-square max-w-[200px] border-2 border-zinc-100 bg-zinc-50">
+                                                <img src={formData.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                                    <Button type="button" size="sm" variant="secondary" onClick={() => setIsGalleryOpen(true)} className="rounded-full font-bold text-[10px] uppercase tracking-widest">
+                                                        Change
+                                                    </Button>
+                                                    <Button type="button" size="sm" variant="destructive" onClick={() => setFormData({ ...formData, avatar_url: "" })} className="rounded-full">
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
                                                 </div>
-                                            )}
-                                        </div>
+                                            </div>
+                                        ) : (
+                                            <div
+                                                onClick={() => setIsGalleryOpen(true)}
+                                                className="border-2 border-dashed border-zinc-100 rounded-[2rem] aspect-square max-w-[200px] flex flex-col items-center justify-center p-6 text-center hover:bg-zinc-50/50 transition-colors cursor-pointer group"
+                                            >
+                                                <div className="h-14 w-14 bg-zinc-50 rounded-[1.25rem] flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
+                                                    <ImagePlus className="h-7 w-7 text-zinc-300" />
+                                                </div>
+                                                <p className="text-xs font-bold text-zinc-900 uppercase tracking-widest">Upload Avatar</p>
+                                                <p className="text-[10px] text-zinc-400 mt-1 uppercase tracking-tighter">JPG, PNG, WEBP</p>
+                                            </div>
+                                        )}
                                         <div className="flex-1 space-y-2">
                                             <div className="flex gap-2">
                                                 <Input
                                                     id="avatar_url"
                                                     value={formData.avatar_url || ""}
-                                                    onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
-                                                    placeholder="https://image-url.com/avatar.jpg"
-                                                    className="h-10 rounded-xl border-zinc-100 bg-zinc-50/50 text-xs font-medium"
+                                                    onFocus={() => setIsGalleryOpen(true)}
+                                                    readOnly
+                                                    placeholder="Select from Media Gallery..."
+                                                    className="h-11 rounded-2xl border-zinc-100 bg-zinc-50/50 text-xs font-medium cursor-pointer"
                                                 />
-                                                <input 
-                                                    type="file" 
-                                                    accept="image/*" 
-                                                    className="hidden" 
-                                                    ref={fileInputRef} 
-                                                    onChange={handleFileChange}
-                                                />
-                                                <Button 
-                                                    type="button" 
-                                                    variant="outline" 
-                                                    className="h-10 px-3 rounded-xl border-zinc-100 text-zinc-600"
-                                                    disabled={uploading}
-                                                    onClick={() => fileInputRef.current?.click()}
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    className="h-11 px-4 rounded-2xl border-zinc-100 text-zinc-600 hover:bg-white shadow-sm"
+                                                    onClick={() => setIsGalleryOpen(true)}
                                                 >
-                                                    {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                                                    <Upload className="h-4 w-4" />
                                                 </Button>
                                             </div>
-                                            <p className="text-[10px] text-zinc-400 font-medium ml-1">Paste a URL or upload a new image to the profile bucket.</p>
+                                            <p className="text-[10px] text-zinc-400 font-medium ml-1">Click to open media gallery or upload new images.</p>
                                         </div>
                                     </div>
+                                    <MediaGalleryModal
+                                        open={isGalleryOpen}
+                                        onOpenChange={setIsGalleryOpen}
+                                        onSelect={(url) => setFormData({ ...formData, avatar_url: url })}
+                                        bucket="profile"
+                                    />
                                 </div>
                                 <div className="space-y-4">
                                     <Label htmlFor="postCount" className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">Platform Activity (Post Count)</Label>
