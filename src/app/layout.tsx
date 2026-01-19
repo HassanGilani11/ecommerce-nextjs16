@@ -13,12 +13,21 @@ const outfit = Outfit({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "AVANT-GARDE | Minimalist Essentials",
-  description: "Curating the finest minimalist essentials for the modern lifestyle.",
-};
-
 import { CartProvider } from "@/context/cart-context";
+import { getSettings } from "@/actions/get-settings";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings();
+  return {
+    title: settings?.meta_title || settings?.site_title || "AVANT-GARDE | Minimalist Essentials",
+    description: settings?.meta_description || settings?.site_tagline || "Curating the finest minimalist essentials for the modern lifestyle.",
+    icons: {
+      icon: settings?.favicon_url || "/favicon.ico",
+    }
+  };
+}
+
+export const dynamic = "force-dynamic"
 
 export default function RootLayout({
   children,

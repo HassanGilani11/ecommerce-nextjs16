@@ -1,8 +1,12 @@
 import Link from "next/link"
 import { getCategories } from "@/actions/get-categories"
+import { getSettings } from "@/actions/get-settings"
 
 export async function Footer() {
-    const categories = await getCategories()
+    const [categories, settings] = await Promise.all([
+        getCategories(),
+        getSettings()
+    ])
 
     return (
         <footer className="border-t bg-background">
@@ -10,17 +14,17 @@ export async function Footer() {
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
                     <div className="col-span-2">
                         <Link href="/" className="text-xl font-bold tracking-tighter mb-4 block">
-                            AVANT-GARDE
+                            {settings?.site_title || "AVANT-GARDE"}
                         </Link>
                         <p className="text-muted-foreground max-w-xs text-sm leading-relaxed font-medium">
-                            Curating the finest minimalist essentials for the modern lifestyle. Quality meets aesthetic.
+                            {settings?.site_tagline || "Curating the finest minimalist essentials for the modern lifestyle. Quality meets aesthetic."}
                         </p>
                     </div>
                     <div>
                         <h4 className="font-bold mb-6 text-[11px] uppercase tracking-[0.2em] text-zinc-900">Shop</h4>
                         <ul className="space-y-4 text-sm text-muted-foreground font-medium">
                             <li><Link href="/shop" className="hover:text-primary transition-colors">All Products</Link></li>
-                            {categories.map((cat) => (
+                            {categories.map((cat: any) => (
                                 <li key={cat.id}>
                                     <Link href={`/product-category/${cat.slug}`} className="hover:text-primary transition-colors">
                                         {cat.name}

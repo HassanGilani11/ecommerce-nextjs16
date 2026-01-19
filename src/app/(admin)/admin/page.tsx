@@ -22,6 +22,7 @@ import {
     AlertCircle
 } from "lucide-react"
 import { getDashboardData } from "@/app/actions/admin-dashboard"
+import { getSettings } from "@/actions/get-settings"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { DashboardReportButton } from "./dashboard-report"
@@ -78,7 +79,10 @@ const STATUS_CONFIG: Record<string, any> = {
 }
 
 export default async function AdminDashboard() {
-    const data = await getDashboardData()
+    const [data, settings] = await Promise.all([
+        getDashboardData(),
+        getSettings()
+    ])
 
     if ('error' in data) {
         if (data.error === "Unauthorized") redirect('/login')
@@ -135,7 +139,7 @@ export default async function AdminDashboard() {
                     <p className="text-zinc-500 text-sm font-medium">An overview of your store's performance and recent activity.</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <DashboardReportButton stats={stats} recentOrders={recentOrders} />
+                    <DashboardReportButton stats={stats} recentOrders={recentOrders} siteTitle={settings?.site_title} />
                     <Link href="/admin/products">
                         <Button className="rounded-2xl bg-zinc-900 text-white h-11 px-6 font-bold uppercase tracking-widest text-[10px] shadow-lg shadow-zinc-200 transition-all hover:scale-105 active:scale-95">
                             Manage Store

@@ -11,12 +11,13 @@ interface DashboardReportProps {
         totalProducts: number
     }
     recentOrders: any[]
+    siteTitle?: string
 }
 
-export function DashboardReportButton({ stats, recentOrders }: DashboardReportProps) {
+export function DashboardReportButton({ stats, recentOrders, siteTitle = "AVANT-GARDE" }: DashboardReportProps) {
     const handleDownload = () => {
         // 1. Dashboard Summary Section
-        let csvContent = "AVANT-GARDE STORE REPORT\n"
+        let csvContent = `${siteTitle.toUpperCase()} STORE REPORT\n`
         csvContent += `Generated at: ${new Date().toLocaleString()}\n\n`
 
         csvContent += "DASHBOARD SUMMARY\n"
@@ -41,7 +42,8 @@ export function DashboardReportButton({ stats, recentOrders }: DashboardReportPr
         const url = URL.createObjectURL(blob)
         const link = document.createElement("a")
         link.setAttribute("href", url)
-        link.setAttribute("download", `avant_garde_report_${new Date().toISOString().split('T')[0]}.csv`)
+        const filename = siteTitle.toLowerCase().replace(/\s+/g, '_')
+        link.setAttribute("download", `${filename}_report_${new Date().toISOString().split('T')[0]}.csv`)
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)

@@ -92,8 +92,26 @@ export default function AdminShell({
     const SidebarContent = () => (
         <div className="flex flex-col h-full bg-zinc-950 text-zinc-400 py-6">
             <div className="px-6 mb-10">
-                <Link href="/" className="text-xl font-bold tracking-tighter text-white">
-                    {settings?.site_title || "E-Commerce Next.js"} <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded-full ml-1 text-zinc-400">ADMIN</span>
+                <Link href="/" className="flex items-center gap-3 group">
+                    <div className="h-10 w-10 rounded-2xl bg-white flex items-center justify-center overflow-hidden shadow-lg shadow-black/20 shrink-0">
+                        {settings?.favicon_url ? (
+                            <img src={settings.favicon_url} alt="Logo" className="h-full w-full object-cover" />
+                        ) : (
+                            <div className="h-full w-full bg-zinc-800 flex items-center justify-center">
+                                <span className="text-white font-black text-xl">
+                                    {(settings?.site_title || "A")[0].toUpperCase()}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-xl font-bold tracking-tighter text-white leading-none">
+                            {settings?.site_title || "AVANT-GARDE"}
+                        </span>
+                        <span className="text-[10px] text-zinc-500 font-bold tracking-[0.2em] uppercase mt-1">
+                            Admin Account
+                        </span>
+                    </div>
                 </Link>
             </div>
 
