@@ -50,8 +50,13 @@ function UpdatePasswordForm() {
         }
         if (state?.success) {
             toast.success(state.success)
+
+            // Redirect based on role after a short delay
+            const adminRoles = ['admin', 'editor', 'moderator', 'author', 'shop_manager']
+            const targetPath = adminRoles.includes((state as any).role) ? "/admin" : "/login"
+
             setTimeout(() => {
-                router.push("/login")
+                router.push(targetPath)
             }, 2000)
         }
     }, [state, router])

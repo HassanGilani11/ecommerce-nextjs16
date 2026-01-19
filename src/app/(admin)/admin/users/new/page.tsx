@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Save, User, Mail, Globe, Shield, Info, UserCheck, Loader2, MessageSquare, Upload, X, ImagePlus } from "lucide-react"
+import { ArrowLeft, Save, User, Mail, Globe, Shield, Info, UserCheck, Loader2, MessageSquare, Upload, X, ImagePlus, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -35,6 +35,7 @@ export default function AddUserPage() {
         website: "",
         avatar_url: "",
         post_count: 0,
+        password: "",
         role: "customer",
         status: "active"
     })
@@ -59,8 +60,22 @@ export default function AddUserPage() {
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault()
+
+        // 1. Client-side Validation
+        if (!formData.username) {
+            toast.error("Username is mandatory")
+            return
+        }
         if (!formData.email) {
-            toast.error("Email is required")
+            toast.error("Email Address is mandatory")
+            return
+        }
+        if (!formData.password) {
+            toast.error("Password is mandatory for new accounts")
+            return
+        }
+        if (!formData.role) {
+            toast.error("User Role is mandatory")
             return
         }
 
@@ -73,7 +88,7 @@ export default function AddUserPage() {
         } else {
             toast.error(result.error || "Failed to create user")
         }
-        setSaving(false)
+        setSaving(true)
     }
 
     return (
@@ -124,7 +139,9 @@ export default function AddUserPage() {
                         <CardContent className="px-10 pb-10 pt-4 space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                                 <div className="space-y-2">
-                                    <Label htmlFor="username" className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">Username</Label>
+                                    <Label htmlFor="username" className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">
+                                        Username <span className="text-red-500">*</span>
+                                    </Label>
                                     <div className="relative">
                                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 font-bold text-xs">@</span>
                                         <Input
@@ -137,7 +154,9 @@ export default function AddUserPage() {
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="email" className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">Email Address</Label>
+                                    <Label htmlFor="email" className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">
+                                        Email Address <span className="text-red-500">*</span>
+                                    </Label>
                                     <div className="relative">
                                         <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
                                         <Input
@@ -146,7 +165,6 @@ export default function AddUserPage() {
                                             value={formData.email}
                                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                             placeholder="john@example.com"
-                                            required
                                             className="h-12 pl-11 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-1 focus-visible:ring-zinc-200 font-medium"
                                         />
                                     </div>
@@ -154,61 +172,22 @@ export default function AddUserPage() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-4">
-                                    <Label className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">Profile Avatar</Label>
-                                    <div className="flex flex-col gap-4">
-                                        {formData.avatar_url ? (
-                                            <div className="group relative rounded-[2rem] overflow-hidden aspect-square max-w-[200px] border-2 border-zinc-100 bg-zinc-50">
-                                                <img src={formData.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                                    <Button type="button" size="sm" variant="secondary" onClick={() => setIsGalleryOpen(true)} className="rounded-full font-bold text-[10px] uppercase tracking-widest">
-                                                        Change
-                                                    </Button>
-                                                    <Button type="button" size="sm" variant="destructive" onClick={() => setFormData({ ...formData, avatar_url: "" })} className="rounded-full">
-                                                        <X className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div
-                                                onClick={() => setIsGalleryOpen(true)}
-                                                className="border-2 border-dashed border-zinc-100 rounded-[2rem] aspect-square max-w-[200px] flex flex-col items-center justify-center p-6 text-center hover:bg-zinc-50/50 transition-colors cursor-pointer group"
-                                            >
-                                                <div className="h-14 w-14 bg-zinc-50 rounded-[1.25rem] flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
-                                                    <ImagePlus className="h-7 w-7 text-zinc-300" />
-                                                </div>
-                                                <p className="text-xs font-bold text-zinc-900 uppercase tracking-widest">Upload Avatar</p>
-                                                <p className="text-[10px] text-zinc-400 mt-1 uppercase tracking-tighter">JPG, PNG, WEBP</p>
-                                            </div>
-                                        )}
-                                        <div className="flex-1 space-y-2">
-                                            <div className="flex gap-2">
-                                                <Input
-                                                    id="avatar_url"
-                                                    value={formData.avatar_url || ""}
-                                                    onFocus={() => setIsGalleryOpen(true)}
-                                                    readOnly
-                                                    placeholder="Select from Media Gallery..."
-                                                    className="h-11 rounded-2xl border-zinc-100 bg-zinc-50/50 text-xs font-medium cursor-pointer"
-                                                />
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    className="h-11 px-4 rounded-2xl border-zinc-100 text-zinc-600 hover:bg-white shadow-sm"
-                                                    onClick={() => setIsGalleryOpen(true)}
-                                                >
-                                                    <Upload className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                            <p className="text-[10px] text-zinc-400 font-medium ml-1">Click to open media gallery or upload new images.</p>
-                                        </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="password" className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">
+                                        Password <span className="text-red-500">*</span>
+                                    </Label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                                        <Input
+                                            id="password"
+                                            type="password"
+                                            value={formData.password}
+                                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                            placeholder="••••••••"
+                                            className="h-12 pl-11 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-1 focus-visible:ring-zinc-200 font-medium"
+                                        />
                                     </div>
-                                    <MediaGalleryModal
-                                        open={isGalleryOpen}
-                                        onOpenChange={setIsGalleryOpen}
-                                        onSelect={(url) => setFormData({ ...formData, avatar_url: url })}
-                                        bucket="profile"
-                                    />
+                                    <p className="text-[10px] text-zinc-400 font-medium ml-1">User will use this password to log in for the first time.</p>
                                 </div>
                                 <div className="space-y-4">
                                     <Label htmlFor="postCount" className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">Initial Post Count</Label>
@@ -222,7 +201,6 @@ export default function AddUserPage() {
                                             className="h-12 pl-11 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-1 focus-visible:ring-zinc-200 font-medium"
                                         />
                                     </div>
-                                    <p className="text-[10px] text-zinc-400 font-medium ml-1">Set the starting post count for this user.</p>
                                 </div>
                             </div>
 
@@ -249,29 +227,86 @@ export default function AddUserPage() {
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="fullName" className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">Full Display Name</Label>
-                                <Input
-                                    id="fullName"
-                                    value={formData.full_name}
-                                    onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                                    placeholder="John Doe"
-                                    className="h-12 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-1 focus-visible:ring-zinc-200 font-medium"
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="website" className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">Website (Optional)</Label>
-                                <div className="relative">
-                                    <Globe className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <Label htmlFor="fullName" className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">Full Display Name</Label>
                                     <Input
-                                        id="website"
-                                        value={formData.website}
-                                        onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                                        placeholder="https://example.com"
-                                        className="h-12 pl-11 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-1 focus-visible:ring-zinc-200 font-medium"
+                                        id="fullName"
+                                        value={formData.full_name}
+                                        onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                                        placeholder="John Doe"
+                                        className="h-12 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-1 focus-visible:ring-zinc-200 font-medium"
                                     />
                                 </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="website" className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">Website (Optional)</Label>
+                                    <div className="relative">
+                                        <Globe className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                                        <Input
+                                            id="website"
+                                            value={formData.website}
+                                            onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                                            placeholder="https://example.com"
+                                            className="h-12 pl-11 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-1 focus-visible:ring-zinc-200 font-medium"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <Label className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">Profile Avatar</Label>
+                                <div className="flex flex-col gap-4">
+                                    {formData.avatar_url ? (
+                                        <div className="group relative rounded-[2rem] overflow-hidden aspect-square max-w-[200px] border-2 border-zinc-100 bg-zinc-50">
+                                            <img src={formData.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                                <Button type="button" size="sm" variant="secondary" onClick={() => setIsGalleryOpen(true)} className="rounded-full font-bold text-[10px] uppercase tracking-widest">
+                                                    Change
+                                                </Button>
+                                                <Button type="button" size="sm" variant="destructive" onClick={() => setFormData({ ...formData, avatar_url: "" })} className="rounded-full">
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div
+                                            onClick={() => setIsGalleryOpen(true)}
+                                            className="border-2 border-dashed border-zinc-100 rounded-[2rem] aspect-square max-w-[200px] flex flex-col items-center justify-center p-6 text-center hover:bg-zinc-50/50 transition-colors cursor-pointer group"
+                                        >
+                                            <div className="h-14 w-14 bg-zinc-50 rounded-[1.25rem] flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
+                                                <ImagePlus className="h-7 w-7 text-zinc-300" />
+                                            </div>
+                                            <p className="text-xs font-bold text-zinc-900 uppercase tracking-widest">Upload Avatar</p>
+                                            <p className="text-[10px] text-zinc-400 mt-1 uppercase tracking-tighter">JPG, PNG, WEBP</p>
+                                        </div>
+                                    )}
+                                    <div className="flex-1 space-y-2">
+                                        <div className="flex gap-2">
+                                            <Input
+                                                id="avatar_url"
+                                                value={formData.avatar_url || ""}
+                                                onFocus={() => setIsGalleryOpen(true)}
+                                                readOnly
+                                                placeholder="Select from Media Gallery..."
+                                                className="h-11 rounded-2xl border-zinc-100 bg-zinc-50/50 text-xs font-medium cursor-pointer"
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                className="h-11 px-4 rounded-2xl border-zinc-100 text-zinc-600 hover:bg-white shadow-sm"
+                                                onClick={() => setIsGalleryOpen(true)}
+                                            >
+                                                <Upload className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <MediaGalleryModal
+                                    open={isGalleryOpen}
+                                    onOpenChange={setIsGalleryOpen}
+                                    onSelect={(url) => setFormData({ ...formData, avatar_url: url })}
+                                    bucket="profile"
+                                />
                             </div>
                         </CardContent>
                     </Card>
@@ -279,10 +314,9 @@ export default function AddUserPage() {
                     <div className="bg-amber-50 border border-amber-100 rounded-2xl p-6 flex gap-4">
                         <Info className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
                         <div>
-                            <p className="text-sm font-bold text-amber-900">Important Note</p>
+                            <p className="text-sm font-bold text-amber-900">Staff Notification</p>
                             <p className="text-xs text-amber-700 mt-1 leading-relaxed">
-                                Creating a user profile here does not automatically create a login account.
-                                The user must still register or be invited via Supabase Auth with this email address to access the account.
+                                After saving, an email will be sent to the user with a secure link to confirm their account and login details.
                             </p>
                         </div>
                     </div>
@@ -302,7 +336,9 @@ export default function AddUserPage() {
                         </CardHeader>
                         <CardContent className="px-8 pb-10 pt-4 space-y-6">
                             <div className="space-y-4 pt-2">
-                                <Label className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">Primary Role</Label>
+                                <Label className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">
+                                    User Role <span className="text-red-500">*</span>
+                                </Label>
                                 <Select
                                     value={formData.role}
                                     onValueChange={(val) => setFormData({ ...formData, role: val })}
@@ -313,6 +349,7 @@ export default function AddUserPage() {
                                     <SelectContent className="rounded-2xl border-zinc-100 shadow-2xl">
                                         <SelectItem value="admin" className="rounded-xl">Administrator</SelectItem>
                                         <SelectItem value="editor" className="rounded-xl">Editor</SelectItem>
+                                        <SelectItem value="shop_manager" className="rounded-xl">Shop Manager</SelectItem>
                                         <SelectItem value="moderator" className="rounded-xl">Moderator</SelectItem>
                                         <SelectItem value="author" className="rounded-xl">Author</SelectItem>
                                         <SelectItem value="customer" className="rounded-xl">Customer</SelectItem>
@@ -326,7 +363,7 @@ export default function AddUserPage() {
                                     <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Permission Note</p>
                                 </div>
                                 <p className="text-[11px] text-zinc-500 font-medium leading-relaxed italic">
-                                    "Administrator role grants full access to all store settings and financial data. Use with caution."
+                                    "Changes to roles take effect immediately. Be careful when granting Admin access."
                                 </p>
                             </div>
                         </CardContent>
@@ -339,7 +376,7 @@ export default function AddUserPage() {
                         </div>
                         <h3 className="text-xl font-bold tracking-tight mb-2">Account Ready?</h3>
                         <p className="text-zinc-400 text-sm leading-relaxed mb-6">
-                            Double check all details before saving. New users will receive a welcome email to verify their account.
+                            Double check all details before saving. All mandatory fields marked with an asterisk (*) must be filled.
                         </p>
                         <Badge variant="outline" className="rounded-lg border-white/10 bg-white/5 text-white py-1 px-3 text-[10px] font-bold uppercase tracking-widest">
                             New Account Profile

@@ -47,10 +47,25 @@ const ROLE_CONFIG = {
         icon: Shield,
         class: "bg-red-50 text-red-600 border-red-100"
     },
+    shop_manager: {
+        label: "Shop Manager",
+        icon: Shield,
+        class: "bg-purple-50 text-purple-600 border-purple-100"
+    },
     moderator: {
         label: "Moderator",
         icon: UserCheck,
         class: "bg-blue-50 text-blue-600 border-blue-100"
+    },
+    editor: {
+        label: "Editor",
+        icon: Edit2,
+        class: "bg-amber-50 text-amber-600 border-amber-100"
+    },
+    author: {
+        label: "Author",
+        icon: User,
+        class: "bg-emerald-50 text-emerald-600 border-emerald-100"
     },
     customer: {
         label: "Customer",
@@ -252,11 +267,38 @@ export function UsersTable({ initialUsers }: UsersTableProps) {
                                                 <DropdownMenuItem
                                                     className="rounded-lg gap-2 text-xs font-medium cursor-pointer"
                                                     onClick={async () => {
+                                                        const result = await updateUser(user.id, { role: 'shop_manager' })
+                                                        if (result.success) toast.success("Role updated to Shop Manager")
+                                                    }}
+                                                >
+                                                    Make Shop Manager
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    className="rounded-lg gap-2 text-xs font-medium cursor-pointer"
+                                                    onClick={async () => {
+                                                        const result = await updateUser(user.id, { role: 'editor' })
+                                                        if (result.success) toast.success("Role updated to Editor")
+                                                    }}
+                                                >
+                                                    Make Editor
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    className="rounded-lg gap-2 text-xs font-medium cursor-pointer"
+                                                    onClick={async () => {
                                                         const result = await updateUser(user.id, { role: 'moderator' })
                                                         if (result.success) toast.success("Role updated to Moderator")
                                                     }}
                                                 >
                                                     Make Moderator
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    className="rounded-lg gap-2 text-xs font-medium cursor-pointer"
+                                                    onClick={async () => {
+                                                        const result = await updateUser(user.id, { role: 'author' })
+                                                        if (result.success) toast.success("Role updated to Author")
+                                                    }}
+                                                >
+                                                    Make Author
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
                                                     className="rounded-lg gap-2 text-xs font-medium cursor-pointer"

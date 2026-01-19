@@ -46,10 +46,12 @@ const ADMIN_NAV = [
 
 export default function AdminShell({
     children,
-    settings
+    settings,
+    user
 }: {
     children: React.ReactNode,
-    settings: any
+    settings: any,
+    user: any
 }) {
     const router = useRouter()
     const pathname = usePathname()
@@ -62,6 +64,29 @@ export default function AdminShell({
         startTransition(() => {
             router.push(href)
         })
+    }
+
+    const getInitials = (name: string) => {
+        if (!name) return "U"
+        return name
+            .split(" ")
+            .filter(Boolean)
+            .map((n) => n[0])
+            .join("")
+            .toUpperCase()
+            .substring(0, 2)
+    }
+
+    const getRoleLabel = (role: string) => {
+        const roles: Record<string, string> = {
+            admin: "System Administrator",
+            shop_manager: "Shop Manager",
+            editor: "Content Editor",
+            moderator: "Moderator",
+            author: "Author",
+            customer: "Customer"
+        }
+        return roles[role] || role
     }
 
     const SidebarContent = () => (
@@ -180,43 +205,53 @@ export default function AdminShell({
                                 <Button variant="ghost" className="relative h-10 w-auto rounded-full pl-0 hover:bg-transparent">
                                     <div className="flex items-center gap-3 pl-2 sm:pl-0">
                                         <div className="text-right hidden sm:block">
-                                            <p className="text-xs font-bold text-zinc-900 leading-none tracking-tight uppercase">Admin Account</p>
-                                            <p className="text-[10px] text-zinc-500 font-medium">System Manager</p>
+                                            <p className="text-xs font-bold text-zinc-900 leading-none tracking-tight uppercase">
+                                                {user?.full_name || user?.username || "Admin Account"}
+                                            </p>
+                                            <p className="text-[10px] text-zinc-500 font-medium">
+                                                {getRoleLabel(user?.role || "admin")}
+                                            </p>
                                         </div>
-                                        <div className="h-8 w-8 rounded-full bg-zinc-900 flex items-center justify-center text-white text-xs font-bold ring-2 ring-white ring-offset-2">
-                                            AA
+                                        <div className="h-8 w-8 rounded-full bg-zinc-900 flex items-center justify-center text-white text-xs font-bold ring-2 ring-white ring-offset-2 overflow-hidden shadow-md">
+                                            {user?.avatar_url ? (
+                                                <img src={user.avatar_url} alt={user.full_name} className="h-full w-full object-cover" />
+                                            ) : (
+                                                getInitials(user?.full_name || user?.username || "Admin")
+                                            )}
                                         </div>
                                     </div>
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-56" align="end" forceMount>
-                                <DropdownMenuLabel className="font-normal">
+                            <DropdownMenuContent className="w-64 p-2 rounded-2xl border-zinc-100 shadow-2xl" align="end" forceMount>
+                                <DropdownMenuLabel className="font-normal p-3">
                                     <div className="flex flex-col space-y-1">
-                                        <p className="text-sm font-medium leading-none">Admin Account</p>
-                                        <p className="text-xs leading-none text-muted-foreground">
-                                            admin@avantgarde.com
+                                        <p className="text-sm font-bold leading-none text-zinc-900">
+                                            {user?.full_name || user?.username || "Admin Account"}
+                                        </p>
+                                        <p className="text-xs leading-none text-zinc-500 font-medium">
+                                            {user?.email || "admin@avantgarde.com"}
                                         </p>
                                     </div>
                                 </DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem asChild>
-                                    <Link href="/admin/settings" className="cursor-pointer">
-                                        <User className="mr-2 h-4 w-4" />
-                                        <span>Profile</span>
+                                <DropdownMenuSeparator className="bg-zinc-100 mx-2" />
+                                <DropdownMenuItem asChild className="rounded-xl m-1 cursor-pointer">
+                                    <Link href="/admin/profile" className="flex items-center">
+                                        <User className="mr-3 h-4 w-4 text-zinc-500" />
+                                        <span className="font-medium">Profile</span>
                                     </Link>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <Link href="/admin/settings" className="cursor-pointer">
-                                        <Settings className="mr-2 h-4 w-4" />
-                                        <span>Settings</span>
+                                <DropdownMenuItem asChild className="rounded-xl m-1 cursor-pointer">
+                                    <Link href="/admin/settings" className="flex items-center">
+                                        <Settings className="mr-3 h-4 w-4 text-zinc-500" />
+                                        <span className="font-medium">Settings</span>
                                     </Link>
                                 </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-red-600 focus:text-red-600 cursor-pointer" onClick={async () => {
+                                <DropdownMenuSeparator className="bg-zinc-100 mx-2" />
+                                <DropdownMenuItem className="text-red-600 focus:text-red-600 cursor-pointer rounded-xl m-1 font-bold" onClick={async () => {
                                     const { logout } = await import("@/app/(main)/(auth)/logout/actions")
                                     await logout()
                                 }}>
-                                    <LogOut className="mr-2 h-4 w-4" />
+                                    <LogOut className="mr-3 h-4 w-4" />
                                     <span>Log out</span>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>

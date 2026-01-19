@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Save, User, Mail, Globe, Shield, Info, UserCheck, Loader2, MessageSquare, Upload, X, ImagePlus } from "lucide-react"
+import { ArrowLeft, Save, User, Mail, Globe, Shield, Info, UserCheck, Loader2, MessageSquare, Upload, X, ImagePlus, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -32,6 +32,7 @@ export default function EditUserPage() {
         full_name: "",
         username: "",
         email: "",
+        password: "", // Added password field
         role: "",
         status: "",
         website: "",
@@ -51,6 +52,7 @@ export default function EditUserPage() {
                     full_name: data.full_name || "",
                     username: data.username || "",
                     email: data.email || "",
+                    password: "", // Keep password empty on load
                     role: data.role || "",
                     status: data.status || "",
                     website: data.website || "",
@@ -58,6 +60,7 @@ export default function EditUserPage() {
                     last_name: data.last_name || "",
                     avatar_url: data.avatar_url || "",
                     post_count: data.post_count || 0,
+                    created_at: data.created_at || new Date().toISOString()
                 })
             } else {
                 toast.error("User not found")
@@ -89,10 +92,21 @@ export default function EditUserPage() {
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!formData.email) {
-            toast.error("Email is required")
+
+        // 1. Client-side Validation
+        if (!formData.username) {
+            toast.error("Username is mandatory")
             return
         }
+        if (!formData.email) {
+            toast.error("Email Address is mandatory")
+            return
+        }
+        if (!formData.role) {
+            toast.error("User Role is mandatory")
+            return
+        }
+
         setSaving(true)
 
         const result = await updateUser(params.id as string, formData)
@@ -162,20 +176,24 @@ export default function EditUserPage() {
                         <CardContent className="px-10 pb-10 pt-4 space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                                 <div className="space-y-2">
-                                    <Label htmlFor="username" className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">Username</Label>
+                                    <Label htmlFor="username" className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">
+                                        Username <span className="text-red-500">*</span>
+                                    </Label>
                                     <div className="relative">
                                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 font-bold text-xs">@</span>
                                         <Input
                                             id="username"
                                             value={formData.username || ""}
-                                            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                                            placeholder="johndoe"
-                                            className="h-12 pl-8 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-1 focus-visible:ring-zinc-200 font-medium"
+                                            readOnly
+                                            className="h-12 pl-8 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-0 cursor-not-allowed font-medium text-zinc-500"
                                         />
+                                        <Lock className="absolute right-4 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-300" />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="email" className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">Email Address <span className="text-rose-500 font-black">*</span></Label>
+                                    <Label htmlFor="email" className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">
+                                        Email Address <span className="text-red-500">*</span>
+                                    </Label>
                                     <div className="relative">
                                         <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
                                         <Input
@@ -183,70 +201,29 @@ export default function EditUserPage() {
                                             type="email"
                                             value={formData.email || ""}
                                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                            required
                                             className="h-12 pl-11 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-1 focus-visible:ring-zinc-200 font-medium"
                                         />
                                     </div>
-                                    <p className="text-[10px] text-zinc-400 font-medium ml-1">Updating email here changes the profile; ensure Auth email matches if necessary.</p>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-4">
-                                    <Label className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">Profile Avatar</Label>
-                                    <div className="flex flex-col gap-4">
-                                        {formData.avatar_url ? (
-                                            <div className="group relative rounded-[2rem] overflow-hidden aspect-square max-w-[200px] border-2 border-zinc-100 bg-zinc-50">
-                                                <img src={formData.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                                    <Button type="button" size="sm" variant="secondary" onClick={() => setIsGalleryOpen(true)} className="rounded-full font-bold text-[10px] uppercase tracking-widest">
-                                                        Change
-                                                    </Button>
-                                                    <Button type="button" size="sm" variant="destructive" onClick={() => setFormData({ ...formData, avatar_url: "" })} className="rounded-full">
-                                                        <X className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div
-                                                onClick={() => setIsGalleryOpen(true)}
-                                                className="border-2 border-dashed border-zinc-100 rounded-[2rem] aspect-square max-w-[200px] flex flex-col items-center justify-center p-6 text-center hover:bg-zinc-50/50 transition-colors cursor-pointer group"
-                                            >
-                                                <div className="h-14 w-14 bg-zinc-50 rounded-[1.25rem] flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
-                                                    <ImagePlus className="h-7 w-7 text-zinc-300" />
-                                                </div>
-                                                <p className="text-xs font-bold text-zinc-900 uppercase tracking-widest">Upload Avatar</p>
-                                                <p className="text-[10px] text-zinc-400 mt-1 uppercase tracking-tighter">JPG, PNG, WEBP</p>
-                                            </div>
-                                        )}
-                                        <div className="flex-1 space-y-2">
-                                            <div className="flex gap-2">
-                                                <Input
-                                                    id="avatar_url"
-                                                    value={formData.avatar_url || ""}
-                                                    onFocus={() => setIsGalleryOpen(true)}
-                                                    readOnly
-                                                    placeholder="Select from Media Gallery..."
-                                                    className="h-11 rounded-2xl border-zinc-100 bg-zinc-50/50 text-xs font-medium cursor-pointer"
-                                                />
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    className="h-11 px-4 rounded-2xl border-zinc-100 text-zinc-600 hover:bg-white shadow-sm"
-                                                    onClick={() => setIsGalleryOpen(true)}
-                                                >
-                                                    <Upload className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                            <p className="text-[10px] text-zinc-400 font-medium ml-1">Click to open media gallery or upload new images.</p>
-                                        </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="password" className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">
+                                        Reset Password (Optional)
+                                    </Label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                                        <Input
+                                            id="password"
+                                            type="password"
+                                            value={formData.password}
+                                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                            placeholder="Leave blank to keep current"
+                                            className="h-12 pl-11 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-1 focus-visible:ring-zinc-200 font-medium"
+                                        />
                                     </div>
-                                    <MediaGalleryModal
-                                        open={isGalleryOpen}
-                                        onOpenChange={setIsGalleryOpen}
-                                        onSelect={(url) => setFormData({ ...formData, avatar_url: url })}
-                                        bucket="profile"
-                                    />
+                                    <p className="text-[10px] text-zinc-400 font-medium ml-1">Update this to manually reset the user's login password.</p>
                                 </div>
                                 <div className="space-y-4">
                                     <Label htmlFor="postCount" className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">Platform Activity (Post Count)</Label>
@@ -260,7 +237,6 @@ export default function EditUserPage() {
                                             className="h-12 pl-11 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-1 focus-visible:ring-zinc-200 font-medium"
                                         />
                                     </div>
-                                    <p className="text-[10px] text-zinc-400 font-medium ml-1">Manual adjustment of user's total post contribution.</p>
                                 </div>
                             </div>
 
@@ -287,29 +263,86 @@ export default function EditUserPage() {
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="fullName" className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">Full Display Name</Label>
-                                <Input
-                                    id="fullName"
-                                    value={formData.full_name || ""}
-                                    onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                                    placeholder="John Doe"
-                                    className="h-12 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-1 focus-visible:ring-zinc-200 font-medium"
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="website" className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">Website (Optional)</Label>
-                                <div className="relative">
-                                    <Globe className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <Label htmlFor="fullName" className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">Full Display Name</Label>
                                     <Input
-                                        id="website"
-                                        value={formData.website || ""}
-                                        onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                                        placeholder="https://example.com"
-                                        className="h-12 pl-11 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-1 focus-visible:ring-zinc-200 font-medium"
+                                        id="fullName"
+                                        value={formData.full_name || ""}
+                                        onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                                        placeholder="John Doe"
+                                        className="h-12 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-1 focus-visible:ring-zinc-200 font-medium"
                                     />
                                 </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="website" className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">Website (Optional)</Label>
+                                    <div className="relative">
+                                        <Globe className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                                        <Input
+                                            id="website"
+                                            value={formData.website || ""}
+                                            onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                                            placeholder="https://example.com"
+                                            className="h-12 pl-11 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-1 focus-visible:ring-zinc-200 font-medium"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <Label className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">Profile Avatar</Label>
+                                <div className="flex flex-col gap-4">
+                                    {formData.avatar_url ? (
+                                        <div className="group relative rounded-[2rem] overflow-hidden aspect-square max-w-[200px] border-2 border-zinc-100 bg-zinc-50">
+                                            <img src={formData.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                                <Button type="button" size="sm" variant="secondary" onClick={() => setIsGalleryOpen(true)} className="rounded-full font-bold text-[10px] uppercase tracking-widest">
+                                                    Change
+                                                </Button>
+                                                <Button type="button" size="sm" variant="destructive" onClick={() => setFormData({ ...formData, avatar_url: "" })} className="rounded-full">
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div
+                                            onClick={() => setIsGalleryOpen(true)}
+                                            className="border-2 border-dashed border-zinc-100 rounded-[2rem] aspect-square max-w-[200px] flex flex-col items-center justify-center p-6 text-center hover:bg-zinc-50/50 transition-colors cursor-pointer group"
+                                        >
+                                            <div className="h-14 w-14 bg-zinc-50 rounded-[1.25rem] flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
+                                                <ImagePlus className="h-7 w-7 text-zinc-300" />
+                                            </div>
+                                            <p className="text-xs font-bold text-zinc-900 uppercase tracking-widest">Upload Avatar</p>
+                                            <p className="text-[10px] text-zinc-400 mt-1 uppercase tracking-tighter">JPG, PNG, WEBP</p>
+                                        </div>
+                                    )}
+                                    <div className="flex-1 space-y-2">
+                                        <div className="flex gap-2">
+                                            <Input
+                                                id="avatar_url"
+                                                value={formData.avatar_url || ""}
+                                                onFocus={() => setIsGalleryOpen(true)}
+                                                readOnly
+                                                placeholder="Select from Media Gallery..."
+                                                className="h-11 rounded-2xl border-zinc-100 bg-zinc-50/50 text-xs font-medium cursor-pointer"
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                className="h-11 px-4 rounded-2xl border-zinc-100 text-zinc-600 hover:bg-white shadow-sm"
+                                                onClick={() => setIsGalleryOpen(true)}
+                                            >
+                                                <Upload className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <MediaGalleryModal
+                                    open={isGalleryOpen}
+                                    onOpenChange={setIsGalleryOpen}
+                                    onSelect={(url) => setFormData({ ...formData, avatar_url: url })}
+                                    bucket="profile"
+                                />
                             </div>
                         </CardContent>
                     </Card>
@@ -329,7 +362,9 @@ export default function EditUserPage() {
                         </CardHeader>
                         <CardContent className="px-8 pb-10 pt-4 space-y-6">
                             <div className="space-y-4 pt-2">
-                                <Label className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">User Role</Label>
+                                <Label className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">
+                                    User Role <span className="text-red-500">*</span>
+                                </Label>
                                 <Select
                                     value={formData.role}
                                     onValueChange={(val) => setFormData({ ...formData, role: val })}
@@ -340,6 +375,7 @@ export default function EditUserPage() {
                                     <SelectContent className="rounded-2xl border-zinc-100 shadow-2xl">
                                         <SelectItem value="admin" className="rounded-xl">Administrator</SelectItem>
                                         <SelectItem value="editor" className="rounded-xl">Editor</SelectItem>
+                                        <SelectItem value="shop_manager" className="rounded-xl">Shop Manager</SelectItem>
                                         <SelectItem value="moderator" className="rounded-xl">Moderator</SelectItem>
                                         <SelectItem value="author" className="rounded-xl">Author</SelectItem>
                                         <SelectItem value="customer" className="rounded-xl">Customer</SelectItem>

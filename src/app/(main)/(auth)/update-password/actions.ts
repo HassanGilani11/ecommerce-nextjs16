@@ -28,5 +28,23 @@ export async function updatePassword(prevState: any, formData: FormData) {
         return { error: error.message }
     }
 
-    return { success: "Password updated successfully. Redirecting..." }
+    const { data: { user } } = await supabase.auth.getUser()
+
+    let role = "customer"
+    if (user) {
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+
+        if (profile) {
+            role = profile.role
+        }
+    }
+
+    return {
+        success: "Password updated successfully. Redirecting...",
+        role: role
+    }
 }
