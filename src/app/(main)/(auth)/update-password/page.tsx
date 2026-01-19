@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useActionState, useEffect, useState, useRef } from "react"
+import { useActionState, useEffect, useState, useRef, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -21,7 +21,7 @@ import { createClient } from "@/lib/supabase/client"
 
 const initialState: { error?: string; success?: string } = {}
 
-export default function UpdatePasswordPage() {
+function UpdatePasswordForm() {
     const [state, action, isPending] = useActionState(updatePassword, initialState)
     const router = useRouter()
     const searchParams = useSearchParams()
@@ -126,5 +126,17 @@ export default function UpdatePasswordPage() {
                 </Card>
             </div>
         </div>
+    )
+}
+
+export default function UpdatePasswordPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        }>
+            <UpdatePasswordForm />
+        </Suspense>
     )
 }
