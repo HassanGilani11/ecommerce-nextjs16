@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button"
 import { getUsers } from "@/app/actions/admin-users"
 import { UsersTable } from "./users-table"
 
+export const dynamic = "force-dynamic"
+
 export default async function UsersManagementPage() {
     const users = await getUsers()
 

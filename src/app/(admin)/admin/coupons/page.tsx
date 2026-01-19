@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button"
 import { getCoupons } from "@/app/actions/coupons"
 import { CouponsTable } from "./coupons-table"
 
+export const dynamic = "force-dynamic"
+
 export default async function CouponsPage() {
     const { data: coupons = [] } = await getCoupons()
 

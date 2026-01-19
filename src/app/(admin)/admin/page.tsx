@@ -27,6 +27,8 @@ import { redirect } from "next/navigation"
 import { DashboardReportButton } from "./dashboard-report"
 import { RecentOrdersCard } from "./dashboard-components"
 
+export const dynamic = "force-dynamic"
+
 const STATUS_CONFIG: Record<string, any> = {
     pending: {
         label: "Pending",

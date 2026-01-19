@@ -17,6 +17,8 @@ import { OrderTabs } from "./order-tabs"
 
 import { OrdersTableContainer } from "./orders-container"
 
+export const dynamic = "force-dynamic"
+
 export default async function OrdersManagementPage({
     searchParams
 }: {

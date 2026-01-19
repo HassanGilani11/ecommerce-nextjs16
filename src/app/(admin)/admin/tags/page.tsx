@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/server"
 import { TagsTable } from "./tags-table"
 
+export const dynamic = "force-dynamic"
+
 export default async function TagManagementPage() {
     const supabase = await createClient()
 
