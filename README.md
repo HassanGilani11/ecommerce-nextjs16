@@ -1,67 +1,79 @@
-# 🚀 Premium Next.js eCommerce Admin & Storefront
+# 🛒 Modern eCommerce Next.js 16 + Supabase + Stripe
 
-A state-of-the-art, high-performance eCommerce platform built with **Next.js 16**, **TypeScript**, and **Supabase**. This project features a sophisticated admin dashboard, real-time analytics, and a seamless media management system.
+A premium, full-stack eCommerce application built with **Next.js 16 (App Router)**, **Supabase**, and **Stripe**. This project features a sophisticated shipping engine, real-time financial tracking for admins, and a stunning, responsive design.
 
-![Project Preview](https://github.com/HassanGilani11/ecommerce-nextjs16/raw/main/public/preview.png) *(Add a real preview image to public/preview.png)*
+![Project Preview](https://via.placeholder.com/1200x600?text=Ecommerce+Next.js+15+with+Stripe+Integration)
 
-## ✨ Key Features
+## 🚀 Features
 
-### 🛠️ Advanced Admin Dashboard
-- **Comprehensive Analytics**: Real-time tracking of Sales, Orders, and Top Performing Products/Categories using **Service Role** security.
-- **Product Management**: Intuitive interface for managing inventory, pricing, categories, and brands with auto-slug generation.
-- **User Management**: Secure profile management with role-based access control (RBAC).
-- **Dynamic Media Gallery**: A powerful, bucket-based media picker for products, categories, and user avatars.
+### 🛍️ Shopping Experience
+- **Modern UI**: Clean, high-performance interface with glassmorphism and smooth micro-animations.
+- **Dynamic Catalog**: Browse products by category, brand, or status (New Arrivals, Featured).
+- **Persistent Cart**: Seamless cart state synchronized between local storage and user profiles.
+- **Smart Checkout**: Intelligent address validation and shipping cost calculation.
 
-### 🍱 Tech Stack
-- **Framework**: [Next.js 16 (App Router)](https://nextjs.org/)
-- **Language**: [TypeScript](https://www.typescriptlang.org/)
-- **Database & Auth**: [Supabase](https://supabase.com/)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **UI Components**: [shadcn/ui](https://ui.shadcn.com/) (Radix UI)
+### 💳 Payments & Finance
+- **Stripe Integration**: Secure, PCI-compliant hosted checkout sessions.
+- **Automated Fulfillment**: Real-time payment verification and automated order status updates.
+- **Admin Financial Insights**: Detailed breakdown of **Stripe fees** and **net payouts** directly in the order dashboard.
+- **Multi-method Support**: Choose between Stripe (Card) and Cash on Delivery (COD).
+
+### 🚚 Advanced Shipping Engine
+- **Zonal Shipping**: Configure shipping rates by country and specific ZIP code patterns (supporting wildcards like `300*`).
+- **Flexible Rates**: Supports Flat Rate, Weight-based, and Free Shipping thresholds.
+- **Strict Matching**: Ensures accurate shipping calculation based on the user's location.
+
+### 🔐 Admin & Security
+- **Secure Auth**: Powered by Supabase Auth with Row Level Security (RLS) for data protection.
+- **Comprehensive Admin Panel**: Manage products, categories, brands, orders, and users with ease.
+- **Shipping Management**: Visual editor for shipping zones and rates.
+- **Email Notifications**: Automated status update emails sent to customers.
+
+## 🛠️ Tech Stack
+
+- **Framework**: [Next.js 16.1.1 (App Router)](https://nextjs.org/)
+- **Core**: [React 19](https://react.dev/), [TypeScript](https://www.typescriptlang.org/)
+- **Backend/Auth**: [Supabase](https://supabase.com/)
+- **Payments**: [Stripe SDK](https://stripe.com/)
+- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
+- **UI Components**: [Shadcn UI](https://ui.shadcn.com/) / [Radix UI](https://www.radix-ui.com/)
 - **Icons**: [Lucide React](https://lucide.dev/)
-- **Date Handling**: [date-fns](https://date-fns.org/)
-- **State & Notifications**: [Sonner](https://sonner.stevenly.me/)
+- **Forms/Validation**: [Zod](https://zod.dev/)
+- **Notifications**: [Sonner](https://react-hot-toast.com/sonner)
 
-## 🚀 Getting Started
+## 🏁 Getting Started
 
 ### 1. Prerequisites
 - Node.js 18+ 
-- Supabase Account
+- A Supabase Project
+- A Stripe Account (for Secret/Publishable keys)
 
 ### 2. Environment Setup
-Create a `.env.local` file in the root directory and add your Supabase credentials:
+Create a `.env.local` file in the root directory:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+STRIPE_SECRET_KEY=your_stripe_secret_key
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 ```
 
-### 3. Installation
+### 3. Database Setup
+Run the SQL migrations provided in the root directory in your Supabase SQL Editor:
+- `supabase_schema.sql` (Core tables)
+- `shipping_schema.sql` (Shipping logic)
+- `update_orders_schema_financials.sql` (Stripe tracking)
+
+### 4. Installation
 ```bash
-# Clone the repository
-git clone https://github.com/HassanGilani11/ecommerce-nextjs16.git
-
-# Install dependencies
 npm install
-
-# Run the development server
 npm run dev
 ```
 
-### 4. Database Schema
-Apply the provided SQL scripts in the `supabase_schema.sql` (and other `.sql` fix files) to your Supabase SQL Editor to set up the necessary tables and RLS policies.
+Visit `http://localhost:3000` to see your store in action!
 
-## 📱 Features Breakdown
-
-### 📊 Real-time Analytics
-The analytics dashboard provides deep insights into your store's performance, utilizing the `SUPABASE_SERVICE_ROLE_KEY` to securely calculate net sales and trends across custom date ranges.
-
-### 🖼️ Media Management
-Integrated `MediaGalleryModal` allows for easy image uploads and selection from multiple storage buckets (`products`, `profile`, `categories`, `brands`), ensuring a consistent UI throughout the admin panel.
+## 🤝 Contributing
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📄 License
-This project is private and intended for use by Hassan Gilani.
-
----
-Built with ❤️ by [Hassan Gilani](https://github.com/HassanGilani11)
+This project is licensed under the MIT License.
