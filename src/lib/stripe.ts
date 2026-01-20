@@ -1,10 +1,15 @@
 import Stripe from "stripe"
 
-if (!process.env.STRIPE_SECRET_KEY) {
-    throw new Error("STRIPE_SECRET_KEY is missing from environment variables")
+export const getStripeInstance = (customSecretKey?: string) => {
+    const key = customSecretKey || process.env.STRIPE_SECRET_KEY
+    if (!key) {
+        throw new Error("STRIPE_SECRET_KEY is missing")
+    }
+    return new Stripe(key, {
+        apiVersion: "2025-12-15.clover",
+        typescript: true,
+    })
 }
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2025-12-15.clover", // Using version expected by SDK types
-    typescript: true,
-})
+// Fallback singleton for backward compatibility or default use
+export const stripe = getStripeInstance()

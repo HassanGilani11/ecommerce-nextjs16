@@ -14,6 +14,7 @@ interface SearchParams {
     maxPrice?: string
     brand?: string
     tag?: string
+    page?: string
 }
 
 export default async function ShopPage({
@@ -30,6 +31,10 @@ export default async function ShopPage({
     const maxPrice = params.maxPrice ? parseFloat(params.maxPrice) : null
     const currentBrand = params.brand || "All"
     const currentTag = params.tag || "All"
+    const currentPage = parseInt(params.page || "1")
+    const pageSize = 12
+    const from = (currentPage - 1) * pageSize
+    const to = from + pageSize - 1
 
     // Fetch filters in parallel
     const [categories, brands, tags] = await Promise.all([
@@ -58,7 +63,7 @@ export default async function ShopPage({
 
     let query = supabase
         .from('products')
-        .select(selectString)
+        .select(selectString, { count: 'exact' })
         .eq('status', 'active')
 
     // 1. Category Filter
@@ -93,7 +98,8 @@ export default async function ShopPage({
         query = query.order('created_at', { ascending: false })
     }
 
-    const { data: products, error } = await query
+    const { data: products, error, count } = await query
+        .range(from, to)
 
     if (error) {
         console.error("Error fetching products:", error)
@@ -115,6 +121,9 @@ export default async function ShopPage({
                 categories={categoryNames}
                 brands={brandNames}
                 tags={tagNames}
+                totalCount={count || 0}
+                currentPage={currentPage}
+                pageSize={pageSize}
             />
         </Suspense>
     )

@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { useState, useEffect } from "react"
-import { Search, X } from "lucide-react"
+import { Search, X, ChevronLeft, ChevronRight } from "lucide-react"
 
 interface Product {
     id: string
@@ -24,6 +24,9 @@ interface ShopContentProps {
     categories: string[]
     brands: string[]
     tags: string[]
+    totalCount: number
+    currentPage: number
+    pageSize: number
 }
 
 export function ShopContent({
@@ -31,9 +34,13 @@ export function ShopContent({
     currentCategory,
     categories,
     brands,
-    tags
+    tags,
+    totalCount,
+    currentPage,
+    pageSize
 }: ShopContentProps) {
     const router = useRouter()
+    const pathname = usePathname()
     const searchParams = useSearchParams()
 
     const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') || "")
@@ -51,7 +58,14 @@ export function ShopContent({
                 params.set(key, value)
             }
         })
-        router.push(`/shop?${params.toString()}`)
+
+        // Reset to page 1 if any filter (except page itself) is changed
+        const nonPageUpdate = Object.keys(updates).some(k => k !== 'page')
+        if (nonPageUpdate && updates.page === undefined) {
+            params.set('page', '1')
+        }
+
+        router.push(`${pathname}?${params.toString()}`)
     }
 
     const handlePriceSubmit = (e: React.FormEvent) => {
@@ -186,8 +200,8 @@ export function ShopContent({
                                     size="sm"
                                     onClick={() => updateFilters({ tag })}
                                     className={`rounded-full px-4 h-8 text-[11px] font-bold uppercase tracking-wider transition-all ${currentTag === tag
-                                            ? "bg-zinc-900 text-white border-zinc-900 shadow-lg shadow-black/10"
-                                            : "bg-white text-zinc-500 border-zinc-100 hover:border-zinc-300"
+                                        ? "bg-zinc-900 text-white border-zinc-900 shadow-lg shadow-black/10"
+                                        : "bg-white text-zinc-500 border-zinc-100 hover:border-zinc-300"
                                         }`}
                                 >
                                     {tag}
@@ -201,7 +215,7 @@ export function ShopContent({
                 <div className="flex-1">
                     <div className="mb-6 flex items-center justify-between">
                         <p className="text-zinc-400 text-xs font-bold uppercase tracking-widest">
-                            Showing {products.length} products
+                            Showing {products.length} of {totalCount} products
                         </p>
                         {(searchParams.toString()) && (
                             <Button
@@ -236,6 +250,63 @@ export function ShopContent({
                             </div>
                         )}
                     </div>
+
+                    {/* Pagination */}
+                    {totalCount > pageSize && (
+                        <div className="mt-16 flex items-center justify-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => updateFilters({ page: (currentPage - 1).toString() })}
+                                disabled={currentPage <= 1}
+                                className="rounded-xl border-zinc-100 h-11 w-11 hover:bg-zinc-50 disabled:opacity-30"
+                            >
+                                <ChevronLeft className="h-5 w-5" />
+                            </Button>
+
+                            <div className="flex items-center gap-1 mx-4">
+                                {Array.from({ length: Math.ceil(totalCount / pageSize) }, (_, i) => i + 1).map((pageNum) => {
+                                    const totalPages = Math.ceil(totalCount / pageSize)
+                                    const isCurrent = pageNum === currentPage
+                                    const isFirst = pageNum === 1
+                                    const isLast = pageNum === totalPages
+                                    const isNeighbor = Math.abs(pageNum - currentPage) <= 1
+
+                                    if (isFirst || isLast || isNeighbor) {
+                                        return (
+                                            <Button
+                                                key={pageNum}
+                                                variant={isCurrent ? "default" : "ghost"}
+                                                onClick={() => updateFilters({ page: pageNum.toString() })}
+                                                className={`h-11 w-11 rounded-xl text-xs font-bold transition-all ${isCurrent
+                                                    ? "bg-zinc-900 text-white shadow-lg shadow-black/10"
+                                                    : "text-zinc-500 hover:bg-zinc-50"
+                                                    }`}
+                                            >
+                                                {pageNum}
+                                            </Button>
+                                        )
+                                    } else if (
+                                        (pageNum === 2 && currentPage > 3) ||
+                                        (pageNum === totalPages - 1 && currentPage < totalPages - 2)
+                                    ) {
+                                        return <span key={pageNum} className="px-2 text-zinc-300 font-bold">...</span>
+                                    }
+                                    return null
+                                })}
+                            </div>
+
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => updateFilters({ page: (currentPage + 1).toString() })}
+                                disabled={currentPage >= Math.ceil(totalCount / pageSize)}
+                                className="rounded-xl border-zinc-100 h-11 w-11 hover:bg-zinc-50 disabled:opacity-30"
+                            >
+                                <ChevronRight className="h-5 w-5" />
+                            </Button>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

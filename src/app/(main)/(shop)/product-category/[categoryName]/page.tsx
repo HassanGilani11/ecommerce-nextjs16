@@ -17,6 +17,7 @@ interface CategoryPageProps {
         maxPrice?: string
         brand?: string
         tag?: string
+        page?: string
     }>
 }
 
@@ -30,6 +31,10 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
     const maxPrice = sParams.maxPrice ? parseFloat(sParams.maxPrice) : null
     const currentBrand = sParams.brand || "All"
     const currentTag = sParams.tag || "All"
+    const currentPage = parseInt(sParams.page || "1")
+    const pageSize = 12
+    const from = (currentPage - 1) * pageSize
+    const to = from + pageSize - 1
 
     // 1. Fetch filters in parallel
     const [categories, brands, tags] = await Promise.all([
@@ -69,7 +74,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
     // 3. Fetch products with full filtering
     let query = supabase
         .from('products')
-        .select(selectString)
+        .select(selectString, { count: 'exact' })
         .eq('category.slug', categoryName)
         .eq('status', 'active')
 
@@ -96,7 +101,8 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
         query = query.order('created_at', { ascending: false })
     }
 
-    const { data: products } = await query
+    const { data: products, count } = await query
+        .range(from, to)
 
     const transformedProducts = (products as any[] || [])?.map(p => ({
         ...p,
@@ -113,6 +119,9 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
             categories={categoryNames}
             brands={brandNames}
             tags={tagNames}
+            totalCount={count || 0}
+            currentPage={currentPage}
+            pageSize={pageSize}
         />
     )
 }

@@ -1,8 +1,9 @@
 "use server"
 
-import { stripe } from "@/lib/stripe"
+import { getStripeInstance } from "@/lib/stripe"
 import { createClient } from "@/lib/supabase/server"
 import { headers } from "next/headers"
+import { getSettings } from "@/actions/get-settings"
 
 export async function createCheckoutSession(data: {
     items: any[],
@@ -29,6 +30,14 @@ export async function createCheckoutSession(data: {
         return { error: "User not authenticated" }
     }
 
+    const settings = await getSettings()
+    const isTestMode = settings?.stripe_test_mode !== false // Default to test
+    const secretKey = isTestMode
+        ? settings?.stripe_test_secret_key
+        : settings?.stripe_live_secret_key
+
+    const stripe = getStripeInstance(secretKey || undefined)
+
     const host = (await headers()).get("host")
     const protocol = host?.includes("localhost") ? "http" : "https"
     const baseUrl = `${protocol}://${host}`
@@ -36,7 +45,7 @@ export async function createCheckoutSession(data: {
     try {
         const lineItems = data.items.map(item => ({
             price_data: {
-                currency: "aud", // Default to AUD for this project
+                currency: "aud",
                 product_data: {
                     name: item.name,
                     images: item.image ? [item.image] : [],
@@ -46,7 +55,6 @@ export async function createCheckoutSession(data: {
             quantity: item.quantity,
         }))
 
-        // Add shipping as a line item if it's > 0
         if (data.shippingCost > 0) {
             lineItems.push({
                 price_data: {
@@ -60,7 +68,6 @@ export async function createCheckoutSession(data: {
             } as any)
         }
 
-        // Handle discount without pre-syncing coupons: Add as a negative line item
         const finalLineItems = [...lineItems]
         if (data.discount > 0) {
             finalLineItems.push({
@@ -110,7 +117,14 @@ export async function verifyStripeSession(sessionId: string) {
     const supabase = await createClient()
 
     try {
-        // Retrieve session with expanded charge and balance transaction to get fees
+        const settings = await getSettings()
+        const isTestMode = settings?.stripe_test_mode !== false
+        const secretKey = isTestMode
+            ? settings?.stripe_test_secret_key
+            : settings?.stripe_live_secret_key
+
+        const stripe = getStripeInstance(secretKey || undefined)
+
         const session = await stripe.checkout.sessions.retrieve(sessionId, {
             expand: ["payment_intent.latest_charge.balance_transaction"],
         })
@@ -119,7 +133,6 @@ export async function verifyStripeSession(sessionId: string) {
         const userId = session.metadata?.userId
 
         if (session.payment_status === "paid" && orderId && userId) {
-            // Extract fee details
             const paymentIntent = session.payment_intent as any
             const charge = paymentIntent?.latest_charge as any
             const balanceTransaction = charge?.balance_transaction as any
@@ -127,7 +140,6 @@ export async function verifyStripeSession(sessionId: string) {
             const fee = balanceTransaction?.fee ? balanceTransaction.fee / 100 : 0
             const net = balanceTransaction?.net ? balanceTransaction.net / 100 : 0
 
-            // 1. Update order status and financials in Supabase
             const { error: orderError } = await supabase
                 .from("orders")
                 .update({
@@ -142,7 +154,6 @@ export async function verifyStripeSession(sessionId: string) {
 
             if (orderError) throw orderError
 
-            // 2. Clear user's cart in Supabase
             const { error: cartError } = await supabase
                 .from("profiles")
                 .update({ cart: [] })
@@ -153,7 +164,7 @@ export async function verifyStripeSession(sessionId: string) {
             return { success: true }
         }
 
-        return { success: false, error: "Payment not verified or session incomplete." }
+        return { success: false, error: "Payment not verified." }
     } catch (error: any) {
         console.error("Verification Error:", error)
         return { success: false, error: error.message }

@@ -10,13 +10,24 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, ArrowRight, CheckCircle2, CreditCard, Truck, Tag } from "lucide-react"
+import {
+    Loader2,
+    ArrowRight,
+    CheckCircle2,
+    CreditCard,
+    Truck,
+    Tag,
+    Building2,
+    Banknote,
+    Terminal
+} from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import { toast } from "sonner"
 import { getShippingZones } from "@/app/actions/shipping"
 import { createCheckoutSession } from "@/app/actions/stripe"
+import { getSettings } from "@/actions/get-settings"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import {
     Select,
     SelectContent,
@@ -43,12 +54,15 @@ export default function CheckoutPage() {
     const [customerState, setCustomerState] = useState("")
     const [customerCity, setCustomerCity] = useState("")
     const [customerZip, setCustomerZip] = useState("")
+    const [paymentMethod, setPaymentMethod] = useState<"COD" | "STRIPE" | "BANK">("COD")
 
     // Shipping States
     const [shippingZones, setShippingZones] = useState<any[]>([])
     const [selectedZoneId, setSelectedZoneId] = useState<string>("")
     const [selectedRateId, setSelectedRateId] = useState<string>("")
     const [isShippingLoading, setIsShippingLoading] = useState(true)
+    const [settings, setSettings] = useState<any>(null)
+    const [isSettingsLoading, setIsSettingsLoading] = useState(true)
 
     const selectedZone = useMemo(() =>
         shippingZones.find(z => z.id === selectedZoneId),
@@ -124,15 +138,31 @@ export default function CheckoutPage() {
 
     const total = subtotal + shippingCost - discount
 
-    // Fetch Shipping Zones
+    // Fetch Shipping Zones & Settings
     useEffect(() => {
-        const fetchZones = async () => {
+        const fetchData = async () => {
             setIsShippingLoading(true)
-            const zones = await getShippingZones()
+            setIsSettingsLoading(true)
+
+            const [zones, siteSettings] = await Promise.all([
+                getShippingZones(),
+                getSettings()
+            ])
+
             setShippingZones(zones)
+            setSettings(siteSettings)
+
+            // Set default payment method based on available options
+            if (siteSettings) {
+                if (siteSettings.enable_cod) setPaymentMethod("COD")
+                else if (siteSettings.enable_stripe) setPaymentMethod("STRIPE")
+                else if (siteSettings.enable_bank_transfer) setPaymentMethod("BANK" as any)
+            }
+
             setIsShippingLoading(false)
+            setIsSettingsLoading(false)
         }
-        fetchZones()
+        fetchData()
     }, [])
 
     // Auto-match zone when zip/country changes
@@ -433,37 +463,115 @@ export default function CheckoutPage() {
                             <h2 className="text-xl font-bold">Payment Method</h2>
                         </div>
                         <div className="grid gap-4">
-                            <Label
-                                htmlFor="payment-cod"
-                                className="flex items-center justify-between p-4 border-2 rounded-2xl cursor-pointer hover:bg-zinc-50 transition-colors border-zinc-900 bg-zinc-50/50"
-                            >
-                                <div className="flex items-center gap-4">
-                                    <div className="h-10 w-10 rounded-full bg-zinc-100 flex items-center justify-center">
-                                        <CreditCard className="h-5 w-5" />
+                            {settings?.enable_cod && (
+                                <Label
+                                    htmlFor="payment-cod"
+                                    className={cn(
+                                        "flex items-center justify-between p-4 border-2 rounded-2xl cursor-pointer hover:bg-zinc-50 transition-all duration-200",
+                                        paymentMethod === "COD" ? "border-zinc-900 bg-zinc-50/50" : "border-zinc-200"
+                                    )}
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="h-10 w-10 rounded-full bg-zinc-100 flex items-center justify-center">
+                                            <Banknote className="h-5 w-5" />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold">Cash on Delivery (COD)</p>
+                                            <p className="text-xs text-muted-foreground">Pay when your order arrives.</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="font-bold">Cash on Delivery (COD)</p>
-                                        <p className="text-xs text-muted-foreground">Pay when your order arrives.</p>
-                                    </div>
-                                </div>
-                                <input type="radio" id="payment-cod" name="paymentMethod" value="COD" defaultChecked className="h-4 w-4 accent-zinc-900" />
-                            </Label>
+                                    <input
+                                        type="radio"
+                                        id="payment-cod"
+                                        name="paymentMethod"
+                                        value="COD"
+                                        checked={paymentMethod === "COD"}
+                                        onChange={() => setPaymentMethod("COD")}
+                                        className="h-4 w-4 accent-zinc-900"
+                                    />
+                                </Label>
+                            )}
 
-                            <Label
-                                htmlFor="payment-stripe"
-                                className="flex items-center justify-between p-4 border-2 rounded-2xl cursor-pointer hover:bg-zinc-50 transition-colors border-zinc-200"
-                            >
-                                <div className="flex items-center gap-4">
-                                    <div className="h-10 w-10 rounded-full bg-zinc-100 flex items-center justify-center">
-                                        <CreditCard className="h-5 w-5" />
+                            {settings?.enable_stripe && (
+                                <Label
+                                    htmlFor="payment-stripe"
+                                    className={cn(
+                                        "flex items-center justify-between p-4 border-2 rounded-2xl cursor-pointer hover:bg-zinc-50 transition-all duration-200",
+                                        paymentMethod === "STRIPE" ? "border-zinc-900 bg-zinc-50/50" : "border-zinc-200"
+                                    )}
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="h-10 w-10 rounded-full bg-zinc-100 flex items-center justify-center">
+                                            <Building2 className="h-5 w-5" />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold">Pay with Card (Stripe)</p>
+                                            <p className="text-xs text-muted-foreground">Secure payment via Stripe.</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="font-bold">Pay with Card (Stripe)</p>
-                                        <p className="text-xs text-muted-foreground">Secure payment via Stripe.</p>
-                                    </div>
+                                    <input
+                                        type="radio"
+                                        id="payment-stripe"
+                                        name="paymentMethod"
+                                        value="STRIPE"
+                                        checked={paymentMethod === "STRIPE"}
+                                        onChange={() => setPaymentMethod("STRIPE")}
+                                        className="h-4 w-4 accent-zinc-900"
+                                    />
+                                </Label>
+                            )}
+
+                            {settings?.enable_bank_transfer && (
+                                <div className="space-y-4">
+                                    <Label
+                                        htmlFor="payment-bank"
+                                        className={cn(
+                                            "flex items-center justify-between p-4 border-2 rounded-2xl cursor-pointer hover:bg-zinc-50 transition-all duration-200",
+                                            paymentMethod === "BANK" ? "border-zinc-900 bg-zinc-50/50" : "border-zinc-200"
+                                        )}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="h-10 w-10 rounded-full bg-zinc-100 flex items-center justify-center">
+                                                <Terminal className="h-5 w-5" />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold">Direct Bank Transfer</p>
+                                                <p className="text-xs text-muted-foreground">Transfer manually to our account.</p>
+                                            </div>
+                                        </div>
+                                        <input
+                                            type="radio"
+                                            id="payment-bank"
+                                            name="paymentMethod"
+                                            value="BANK"
+                                            checked={paymentMethod === "BANK"}
+                                            onChange={() => setPaymentMethod("BANK")}
+                                            className="h-4 w-4 accent-zinc-900"
+                                        />
+                                    </Label>
+
+                                    {paymentMethod === "BANK" && (
+                                        <div className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                                            <p className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-2">Instructions</p>
+                                            <p className="text-sm font-medium whitespace-pre-wrap">{settings.bank_transfer_details}</p>
+                                        </div>
+                                    )}
                                 </div>
-                                <input type="radio" id="payment-stripe" name="paymentMethod" value="STRIPE" className="h-4 w-4 accent-zinc-900" />
-                            </Label>
+                            )}
+
+                            {!isSettingsLoading && !settings?.enable_cod && !settings?.enable_stripe && !settings?.enable_bank_transfer && (
+                                <div className="p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100 text-sm font-medium">
+                                    No payment methods are currently available. Please contact support.
+                                </div>
+                            )}
+
+                            {isSettingsLoading && (
+                                <div className="space-y-4">
+                                    {[1, 2].map(i => (
+                                        <div key={i} className="h-20 w-full bg-zinc-100 rounded-2xl animate-pulse" />
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </section>
                 </div>

@@ -11,8 +11,12 @@ import {
     Filter,
     ArrowUpDown,
     Loader2,
-    Eye
+    Eye,
+    Download,
+    Upload
 } from "lucide-react"
+import { exportProductsToCSV } from "./import-export-actions"
+import { ImportProductsModal } from "./import-products-modal"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -62,6 +66,33 @@ interface ProductsTableProps {
 
 export function ProductsTable({ products }: ProductsTableProps) {
     const [searchQuery, setSearchQuery] = React.useState("")
+    const [isExporting, setIsExporting] = React.useState(false)
+
+    const handleExport = async () => {
+        setIsExporting(true)
+        try {
+            const result = await exportProductsToCSV()
+            if (result.success && result.csv) {
+                const blob = new Blob([result.csv], { type: 'text/csv;charset=utf-8;' })
+                const url = URL.createObjectURL(blob)
+                const link = document.createElement('a')
+                link.setAttribute('href', url)
+                link.setAttribute('download', `products-export-${new Date().toISOString().split('T')[0]}.csv`)
+                link.style.visibility = 'hidden'
+                document.body.appendChild(link)
+                link.click()
+                document.body.removeChild(link)
+                toast.success("Products exported successfully")
+            } else {
+                toast.error(result.error || "Failed to export products")
+            }
+        } catch (err) {
+            toast.error("An error occurred during export")
+        } finally {
+            setIsExporting(false)
+        }
+    }
+
 
     const filteredProducts = React.useMemo(() => {
         return products.filter(product =>
@@ -83,10 +114,22 @@ export function ProductsTable({ products }: ProductsTableProps) {
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
-                <Button variant="outline" className="h-12 rounded-2xl gap-2 border-zinc-200 hover:bg-zinc-50 font-semibold px-6 w-full sm:w-auto">
-                    <Filter className="h-4 w-4" />
-                    Filters
-                </Button>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <ImportProductsModal />
+                    <Button
+                        variant="outline"
+                        className="h-12 rounded-2xl gap-2 border-zinc-200 hover:bg-zinc-50 font-semibold px-4 flex-1 sm:flex-initial"
+                        onClick={handleExport}
+                        disabled={isExporting}
+                    >
+                        {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                        Export
+                    </Button>
+                    <Button variant="outline" className="h-12 rounded-2xl gap-2 border-zinc-200 hover:bg-zinc-50 font-semibold px-4 flex-1 sm:flex-initial">
+                        <Filter className="h-4 w-4" />
+                        Filters
+                    </Button>
+                </div>
             </div>
 
             <div className="bg-white rounded-[2rem] shadow-sm border border-zinc-100 overflow-hidden">

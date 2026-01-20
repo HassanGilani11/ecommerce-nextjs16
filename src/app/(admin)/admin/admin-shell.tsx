@@ -17,7 +17,8 @@ import {
     Award,
     BarChart3,
     Ticket,
-    Truck
+    Truck,
+    CreditCard
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
@@ -43,6 +44,7 @@ const ADMIN_NAV = [
     { name: "Shipping", href: "/admin/shipping", icon: Truck },
     { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
     { name: "Users", href: "/admin/users", icon: User },
+    { name: "Payments", href: "/admin/payments", icon: CreditCard },
     { name: "Settings", href: "/admin/settings", icon: Settings },
 ]
 

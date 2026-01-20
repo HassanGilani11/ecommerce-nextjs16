@@ -14,7 +14,7 @@ const checkoutSchema = z.object({
     state: z.string().min(2, "State/Region is required"),
     zipCode: z.string().min(2, "Zip code is required"),
     country: z.string().min(2, "Country is required"),
-    paymentMethod: z.enum(["COD", "STRIPE"]),
+    paymentMethod: z.enum(["COD", "STRIPE", "BANK"]),
 })
 
 export async function placeOrder(formData: FormData) {
@@ -118,7 +118,7 @@ export async function placeOrder(formData: FormData) {
     }
 
     // 7. Clear the cart in Supabase (Only for COD. Stripe clears on success)
-    if (data.paymentMethod === "COD") {
+    if (data.paymentMethod === "COD" || data.paymentMethod === "BANK") {
         await supabase
             .from('profiles')
             .update({ cart: [] })
