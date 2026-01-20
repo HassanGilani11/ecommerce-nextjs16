@@ -17,6 +17,7 @@ const STATUS_CONFIG: Record<string, any> = {
     pending: { label: "Pending", icon: Clock, class: "bg-amber-50 text-amber-600 border-amber-100" },
     processing: { label: "Processing", icon: Clock, class: "bg-amber-50 text-amber-600 border-amber-100" },
     shipped: { label: "Shipped", icon: Truck, class: "bg-blue-50 text-blue-600 border-blue-100" },
+    paid: { label: "Paid", icon: CheckCircle2, class: "bg-emerald-50 text-emerald-600 border-emerald-100" },
     delivered: { label: "Delivered", icon: CheckCircle2, class: "bg-emerald-50 text-emerald-600 border-emerald-100" },
     completed: { label: "Completed", icon: CheckCircle2, class: "bg-emerald-50 text-emerald-600 border-emerald-100" },
     cancelled: { label: "Cancelled", icon: XCircle, class: "bg-rose-50 text-rose-600 border-rose-100" },

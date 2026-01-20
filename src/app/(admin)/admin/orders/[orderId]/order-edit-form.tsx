@@ -27,7 +27,8 @@ import {
     Mail,
     Phone,
     Truck,
-    CreditCard
+    CreditCard,
+    Clock
 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import Image from "next/image"
@@ -136,6 +137,7 @@ export function OrderEditForm({ order }: { order: any }) {
                                     </SelectTrigger>
                                     <SelectContent className="rounded-2xl border-zinc-100 shadow-2xl p-2">
                                         <SelectItem value="pending" className="rounded-xl py-3 font-medium">Pending</SelectItem>
+                                        <SelectItem value="paid" className="rounded-xl py-3 font-medium text-emerald-600">Paid</SelectItem>
                                         <SelectItem value="processing" className="rounded-xl py-3 font-medium">Processing</SelectItem>
                                         <SelectItem value="shipped" className="rounded-xl py-3 font-medium">Shipped</SelectItem>
                                         <SelectItem value="delivered" className="rounded-xl py-3 font-medium">Delivered</SelectItem>
@@ -285,7 +287,7 @@ export function OrderEditForm({ order }: { order: any }) {
                     <CardHeader className="border-b border-white/10 px-8 py-8">
                         <CardTitle className="text-2xl font-black tracking-tighter">Order Summary</CardTitle>
                     </CardHeader>
-                    <CardContent className="p-6 space-y-8">
+                    <CardContent className="p-6 space-y-6">
                         <div className="space-y-4">
                             <div className="flex justify-between items-center">
                                 <span className="text-zinc-400 font-bold uppercase tracking-widest text-[10px]">Subtotal</span>
@@ -297,18 +299,48 @@ export function OrderEditForm({ order }: { order: any }) {
                             </div>
                             <div className="flex justify-between items-center text-emerald-400">
                                 <span className="font-bold uppercase tracking-widest text-[10px]">Shipping</span>
-                                <span className="font-bold tracking-tight">$10.00</span>
+                                <span className="font-bold tracking-tight">${(Number(order.shipping_cost) || 10).toFixed(2)}</span>
+                            </div>
+
+                            <Separator className="bg-white/10" />
+
+                            <div className="flex justify-between items-center pt-2">
+                                <div className="space-y-1">
+                                    <span className="font-black uppercase tracking-widest text-[11px] text-zinc-400">Grand Total</span>
+                                    <p className="text-4xl font-black tracking-tighter text-white">${total.toFixed(2)}</p>
+                                </div>
                             </div>
                         </div>
 
-                        <Separator className="bg-white/10" />
+                        {/* Payment Details (Enhanced) */}
+                        {order.status === 'paid' && (
+                            <>
+                                <Separator className="bg-white/10" />
+                                <div className="space-y-4 pt-2">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-zinc-400 font-bold uppercase tracking-widest text-[10px]">Paid Amount</span>
+                                        <span className="font-bold text-white">${total.toFixed(2)}</span>
+                                    </div>
+                                    <div className="text-[10px] font-medium text-zinc-500 flex items-center gap-2">
+                                        <Clock className="h-3 w-3" />
+                                        {new Date(order.paid_at).toLocaleString()} via {order.payment_method}
+                                    </div>
 
-                        <div className="flex justify-between items-end">
-                            <div className="space-y-1">
-                                <span className="font-black uppercase tracking-widest text-[11px] text-zinc-400">Grand Total</span>
-                                <p className="text-4xl font-black tracking-tighter text-white">${total.toFixed(2)}</p>
-                            </div>
-                        </div>
+                                    {order.payment_method === 'STRIPE' && order.stripe_fee > 0 && (
+                                        <div className="bg-white/5 rounded-2xl p-4 space-y-3">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-zinc-500 font-bold uppercase tracking-widest text-[9px]">Stripe Fee</span>
+                                                <span className="font-bold text-rose-400 text-xs">-${Number(order.stripe_fee).toFixed(2)}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-zinc-400 font-bold uppercase tracking-widest text-[9px]">Net Payout</span>
+                                                <span className="font-bold text-emerald-400 text-sm">${Number(order.stripe_payout).toFixed(2)}</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        )}
 
                         <Button
                             type="submit"

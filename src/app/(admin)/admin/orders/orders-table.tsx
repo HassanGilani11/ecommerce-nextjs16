@@ -44,6 +44,11 @@ const STATUS_CONFIG: Record<string, any> = {
         icon: Clock,
         class: "bg-amber-50 text-amber-600 border-amber-100"
     },
+    paid: {
+        label: "Paid",
+        icon: CheckCircle2,
+        class: "bg-emerald-50 text-emerald-600 border-emerald-100"
+    },
     shipped: {
         label: "Shipped",
         icon: Truck,

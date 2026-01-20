@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import { toast } from "sonner"
 import { getShippingZones } from "@/app/actions/shipping"
+import { createCheckoutSession } from "@/app/actions/stripe"
 import {
     Select,
     SelectContent,
@@ -145,6 +146,7 @@ export default function CheckoutPage() {
         }
     }, [customerZip, customerCountry, shippingZones, selectedZoneId])
 
+
     // Update selected rate based on logic
     useEffect(() => {
         if (filteredRates.length > 0) {
@@ -216,6 +218,37 @@ export default function CheckoutPage() {
                     setFieldErrors(result.details as Record<string, string[]>)
                 }
             } else if (result.success) {
+                // If it's STRIPE, redirect to Stripe URL
+                if (formData.get("paymentMethod") === "STRIPE") {
+                    const stripeResult = await createCheckoutSession({
+                        items: cart,
+                        shippingCost,
+                        discount,
+                        orderId: result.orderId!, // Now we pass the orderId
+                        couponCode: couponCode || undefined,
+                        customerDetails: {
+                            email: formData.get("email") as string,
+                            firstName: formData.get("firstName") as string,
+                            lastName: formData.get("lastName") as string,
+                            address: formData.get("address") as string,
+                            city: formData.get("city") as string,
+                            state: formData.get("state") as string,
+                            zipCode: formData.get("zipCode") as string,
+                            country: formData.get("country") as string,
+                            phone: formData.get("phone") as string
+                        }
+                    })
+
+                    if (stripeResult.url) {
+                        window.location.href = stripeResult.url
+                        return
+                    } else if (stripeResult.error) {
+                        setError(stripeResult.error)
+                        setIsLoading(false)
+                        return
+                    }
+                }
+
                 setIsSuccess(true)
                 setOrderId(result.orderId!)
                 clearCart()
@@ -399,7 +432,6 @@ export default function CheckoutPage() {
                             <div className="h-8 w-8 rounded-full bg-zinc-900 text-white flex items-center justify-center text-xs font-bold">2</div>
                             <h2 className="text-xl font-bold">Payment Method</h2>
                         </div>
-
                         <div className="grid gap-4">
                             <Label
                                 htmlFor="payment-cod"
@@ -416,12 +448,28 @@ export default function CheckoutPage() {
                                 </div>
                                 <input type="radio" id="payment-cod" name="paymentMethod" value="COD" defaultChecked className="h-4 w-4 accent-zinc-900" />
                             </Label>
+
+                            <Label
+                                htmlFor="payment-stripe"
+                                className="flex items-center justify-between p-4 border-2 rounded-2xl cursor-pointer hover:bg-zinc-50 transition-colors border-zinc-200"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className="h-10 w-10 rounded-full bg-zinc-100 flex items-center justify-center">
+                                        <CreditCard className="h-5 w-5" />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold">Pay with Card (Stripe)</p>
+                                        <p className="text-xs text-muted-foreground">Secure payment via Stripe.</p>
+                                    </div>
+                                </div>
+                                <input type="radio" id="payment-stripe" name="paymentMethod" value="STRIPE" className="h-4 w-4 accent-zinc-900" />
+                            </Label>
                         </div>
                     </section>
                 </div>
 
                 {/* Right Column: Order Summary */}
-                <div className="lg:col-span-5">
+                < div className="lg:col-span-5" >
                     <div className="bg-zinc-50 rounded-[2.5rem] p-8 border sticky top-24">
                         <h3 className="text-xl font-bold mb-8">Your Order</h3>
 
@@ -532,8 +580,8 @@ export default function CheckoutPage() {
                             Encrypted & Secure Payment
                         </p>
                     </div>
-                </div>
-            </form>
-        </div>
+                </div >
+            </form >
+        </div >
     )
 }

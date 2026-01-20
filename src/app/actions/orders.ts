@@ -14,7 +14,7 @@ const checkoutSchema = z.object({
     state: z.string().min(2, "State/Region is required"),
     zipCode: z.string().min(2, "Zip code is required"),
     country: z.string().min(2, "Country is required"),
-    paymentMethod: z.enum(["COD"]),
+    paymentMethod: z.enum(["COD", "STRIPE"]),
 })
 
 export async function placeOrder(formData: FormData) {
@@ -81,7 +81,9 @@ export async function placeOrder(formData: FormData) {
             status: 'pending',
             subtotal: subtotal,
             discount: discount,
+            shipping_cost: shipping,
             total: total,
+            payment_method: data.paymentMethod,
             shipping_address: fullAddress,
             billing_address: fullAddress, // For now, same as shipping
         })
@@ -115,11 +117,13 @@ export async function placeOrder(formData: FormData) {
         await incrementCouponUsage(couponCode)
     }
 
-    // 7. Clear the cart in Supabase
-    await supabase
-        .from('profiles')
-        .update({ cart: [] })
-        .eq('id', user.id)
+    // 7. Clear the cart in Supabase (Only for COD. Stripe clears on success)
+    if (data.paymentMethod === "COD") {
+        await supabase
+            .from('profiles')
+            .update({ cart: [] })
+            .eq('id', user.id)
+    }
 
     return { success: true, orderId: order.id }
 }
