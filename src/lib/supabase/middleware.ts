@@ -35,48 +35,6 @@ export async function updateSession(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser()
 
-    // --- MAINTENANCE MODE LOGIC ---
-    const { data: settings } = await supabase
-        .from('settings')
-        .select('maintenance_mode')
-        .eq('id', 1)
-        .single()
-
-    const isMaintenanceMode = settings?.maintenance_mode
-
-    // Check if user is admin to bypass maintenance
-    let isAdmin = false
-    if (user) {
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', user.id)
-            .single()
-        isAdmin = profile?.role === 'admin'
-    }
-
-    const currentPath = request.nextUrl.pathname
-
-    if (isMaintenanceMode && !isAdmin) {
-        // Redirect to maintenance if not already on allowed paths
-        const isAllowedPath =
-            currentPath.startsWith('/maintenance') ||
-            currentPath.startsWith('/admin') ||
-            currentPath.startsWith('/login')
-
-        if (!isAllowedPath) {
-            const url = request.nextUrl.clone()
-            url.pathname = '/maintenance'
-            return NextResponse.redirect(url)
-        }
-    } else if (!isMaintenanceMode && currentPath.startsWith('/maintenance')) {
-        // If maintenance is OFF but user is on /maintenance page, redirect home
-        const url = request.nextUrl.clone()
-        url.pathname = '/'
-        return NextResponse.redirect(url)
-    }
-    // --- END MAINTENANCE MODE LOGIC ---
-
     if (user && (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register'))) {
         const url = request.nextUrl.clone()
         url.pathname = '/'

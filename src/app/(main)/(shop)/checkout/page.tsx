@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useCart } from "@/context/cart-context"
+import { cn } from "@/lib/utils"
 import { placeOrder } from "@/app/actions/orders"
 import { validateCoupon } from "@/app/actions/coupons"
 import { Button } from "@/components/ui/button"
@@ -11,8 +12,18 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, ArrowRight, CheckCircle2, CreditCard, Truck, Tag } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import { toast } from "sonner"
+import { getShippingZones } from "@/app/actions/shipping"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { LOCATIONS } from "@/data/locations"
 
 export default function CheckoutPage() {
     const router = useRouter()
@@ -26,8 +37,146 @@ export default function CheckoutPage() {
     const [couponCode, setCouponCode] = useState("")
     const [discount, setDiscount] = useState(0)
 
-    const shipping = 10
-    const total = subtotal + shipping - discount
+    // Address States for Auto-matching
+    const [customerCountry, setCustomerCountry] = useState("Australia")
+    const [customerState, setCustomerState] = useState("")
+    const [customerCity, setCustomerCity] = useState("")
+    const [customerZip, setCustomerZip] = useState("")
+
+    // Shipping States
+    const [shippingZones, setShippingZones] = useState<any[]>([])
+    const [selectedZoneId, setSelectedZoneId] = useState<string>("")
+    const [selectedRateId, setSelectedRateId] = useState<string>("")
+    const [isShippingLoading, setIsShippingLoading] = useState(true)
+
+    const selectedZone = useMemo(() =>
+        shippingZones.find(z => z.id === selectedZoneId),
+        [shippingZones, selectedZoneId])
+
+    const availableRates = useMemo(() =>
+        selectedZone?.rates || [],
+        [selectedZone])
+
+    // Filter available rates based on conditions (like Free Shipping threshold)
+    const filteredRates = useMemo(() => {
+        return availableRates.filter((rate: any) => {
+            if (rate.type === 'free') {
+                return subtotal >= (parseFloat(rate.min_order_subtotal) || 0)
+            }
+            return true
+        })
+    }, [availableRates, subtotal])
+
+    const selectedRate = useMemo(() =>
+        availableRates.find((r: any) => r.id === selectedRateId),
+        [availableRates, selectedRateId])
+
+    // ZIP Matching Helper (Strict Country + ZIP sync)
+    const matchZone = (zip: string, country: string, zones: any[]) => {
+        if (!country) return null
+
+        // 1. Filter zones by country name (case-insensitive check)
+        const countryMatchedZones = zones.filter(zone => {
+            const countryArray = Array.isArray(zone.countries) ? zone.countries : [];
+            return countryArray.some((c: string) => c.toLowerCase() === country.toLowerCase())
+        })
+
+        if (countryMatchedZones.length === 0) return null
+
+        // 2. Find specific ZIP match within country-matched zones
+        if (zip) {
+            const zipMatched = countryMatchedZones.find(zone => {
+                if (!zone.zip_codes) return false
+                const zipList = zone.zip_codes.split(',').map((s: string) => s.trim().toLowerCase())
+                return zipList.some((pattern: string) => {
+                    if (pattern.endsWith('*')) {
+                        return zip.toLowerCase().startsWith(pattern.slice(0, -1))
+                    }
+                    return pattern === zip.toLowerCase()
+                })
+            })
+            if (zipMatched) return zipMatched.id
+        }
+
+        // 3. Fallback to a "catch-all" zone for this country (one with no zip_codes defined)
+        const catchAllZone = countryMatchedZones.find(zone => !zone.zip_codes || zone.zip_codes.trim() === "")
+
+        return catchAllZone?.id || null
+    }
+
+    // Calculate Dynamic Shipping Cost
+    const shippingCost = useMemo(() => {
+        if (!selectedRate) return 0
+
+        if (selectedRate.type === 'free') return 0
+
+        if (selectedRate.type === 'flat') {
+            return parseFloat(selectedRate.base_cost) || 0
+        }
+
+        // Weight-based logic (dummy weight for now)
+        const totalWeight = cart.reduce((acc, item) => acc + (item.quantity * 0.5), 0)
+        const base = parseFloat(selectedRate.base_cost) || 0
+        const perKg = parseFloat(selectedRate.price_per_kg) || 0
+        return base + (totalWeight * perKg)
+    }, [selectedRate, cart])
+
+    const total = subtotal + shippingCost - discount
+
+    // Fetch Shipping Zones
+    useEffect(() => {
+        const fetchZones = async () => {
+            setIsShippingLoading(true)
+            const zones = await getShippingZones()
+            setShippingZones(zones)
+            setIsShippingLoading(false)
+        }
+        fetchZones()
+    }, [])
+
+    // Auto-match zone when zip/country changes
+    useEffect(() => {
+        if (shippingZones.length > 0) {
+            const matchedId = matchZone(customerZip, customerCountry, shippingZones) || ""
+            if (matchedId !== selectedZoneId) {
+                setSelectedZoneId(matchedId)
+                setSelectedRateId("") // Reset rate when zone changes
+            }
+        }
+    }, [customerZip, customerCountry, shippingZones, selectedZoneId])
+
+    // Update selected rate based on logic
+    useEffect(() => {
+        if (filteredRates.length > 0) {
+            const currentIsValid = filteredRates.find((r: any) => r.id === selectedRateId);
+            const freeRate = filteredRates.find((r: any) => r.type === 'free');
+
+            // Try to find a rate that matches the city or state name
+            const locationMatchedRate = filteredRates.find((r: any) => {
+                const name = r.name.toLowerCase();
+                const city = customerCity.toLowerCase();
+                const state = customerState.toLowerCase();
+                return (city && name.includes(city)) || (state && name.includes(state));
+            });
+
+            let targetRateId = "";
+            if (freeRate) {
+                targetRateId = freeRate.id;
+            } else if (locationMatchedRate) {
+                targetRateId = locationMatchedRate.id;
+            } else if (currentIsValid) {
+                targetRateId = selectedRateId;
+            } else {
+                targetRateId = filteredRates[0].id;
+            }
+
+            if (targetRateId !== selectedRateId) {
+                setSelectedRateId(targetRateId);
+            }
+        } else if (selectedRateId !== "") {
+            setSelectedRateId("");
+        }
+    }, [filteredRates, selectedRateId, customerCity, customerState])
 
     const handleApplyCoupon = async () => {
         if (!couponCode) return
@@ -117,6 +266,7 @@ export default function CheckoutPage() {
             <h1 className="text-3xl lg:text-4xl font-bold tracking-tighter mb-10">Checkout</h1>
 
             <form onSubmit={handleSubmit} className="grid lg:grid-cols-12 gap-12">
+
                 {/* Left Column: Form Details */}
                 <div className="lg:col-span-7 space-y-10">
                     <section className="space-y-6">
@@ -159,30 +309,90 @@ export default function CheckoutPage() {
 
                         <div className="grid sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="city" className="text-xs uppercase font-black tracking-widest text-muted-foreground">City</Label>
-                                <Input id="city" name="city" placeholder="Brisbane City" className="rounded-xl h-12" required />
-                                {fieldErrors.city && <p className="text-xs text-destructive">{fieldErrors.city[0]}</p>}
+                                <Label className="text-xs uppercase font-black tracking-widest text-muted-foreground">Country</Label>
+                                <Select
+                                    name="country"
+                                    value={customerCountry}
+                                    onValueChange={(val) => {
+                                        setCustomerCountry(val)
+                                        setCustomerState("")
+                                        setCustomerCity("")
+                                    }}
+                                >
+                                    <SelectTrigger className="rounded-xl h-12">
+                                        <SelectValue placeholder="Select Country" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {LOCATIONS.map(c => (
+                                            <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                {fieldErrors.country && <p className="text-xs text-destructive">{fieldErrors.country[0]}</p>}
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="state" className="text-xs uppercase font-black tracking-widest text-muted-foreground">State / Region</Label>
-                                <Input id="state" name="state" placeholder="Queensland" className="rounded-xl h-12" required />
+                                <Label className="text-xs uppercase font-black tracking-widest text-muted-foreground">State / Region</Label>
+                                <Select
+                                    name="state"
+                                    value={customerState}
+                                    onValueChange={(val) => {
+                                        setCustomerState(val)
+                                        setCustomerCity("")
+                                    }}
+                                    disabled={!customerCountry}
+                                >
+                                    <SelectTrigger className="rounded-xl h-12">
+                                        <SelectValue placeholder="Select State" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {LOCATIONS.find(c => c.name === customerCountry)?.states.map(s => (
+                                            <SelectItem key={s.name} value={s.name}>{s.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                                 {fieldErrors.state && <p className="text-xs text-destructive">{fieldErrors.state[0]}</p>}
                             </div>
                         </div>
 
                         <div className="grid sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="zipCode" className="text-xs uppercase font-black tracking-widest text-muted-foreground">Zip / Postcode</Label>
-                                <Input id="zipCode" name="zipCode" placeholder="4122" className="rounded-xl h-12" required />
-                                {fieldErrors.zipCode && <p className="text-xs text-destructive">{fieldErrors.zipCode[0]}</p>}
+                                <Label className="text-xs uppercase font-black tracking-widest text-muted-foreground">City</Label>
+                                <Select
+                                    name="city"
+                                    value={customerCity}
+                                    onValueChange={setCustomerCity}
+                                    disabled={!customerState}
+                                >
+                                    <SelectTrigger className="rounded-xl h-12">
+                                        <SelectValue placeholder="Select City" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {LOCATIONS.find(c => c.name === customerCountry)
+                                            ?.states.find(s => s.name === customerState)
+                                            ?.cities.map(city => (
+                                                <SelectItem key={city} value={city}>{city}</SelectItem>
+                                            ))
+                                        }
+                                    </SelectContent>
+                                </Select>
+                                {fieldErrors.city && <p className="text-xs text-destructive">{fieldErrors.city[0]}</p>}
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="country" className="text-xs uppercase font-black tracking-widest text-muted-foreground">Country</Label>
-                                <Input id="country" name="country" placeholder="Australia" className="rounded-xl h-12" required />
-                                {fieldErrors.country && <p className="text-xs text-destructive">{fieldErrors.country[0]}</p>}
+                                <Label htmlFor="zipCode" className="text-xs uppercase font-black tracking-widest text-muted-foreground">Zip / Postcode</Label>
+                                <Input
+                                    id="zipCode"
+                                    name="zipCode"
+                                    placeholder="4122"
+                                    className="rounded-xl h-12"
+                                    required
+                                    value={customerZip}
+                                    onChange={(e) => setCustomerZip(e.target.value)}
+                                />
+                                {fieldErrors.zipCode && <p className="text-xs text-destructive">{fieldErrors.zipCode[0]}</p>}
                             </div>
                         </div>
                     </section>
+
 
                     <section className="space-y-6">
                         <div className="flex items-center gap-3">
@@ -265,11 +475,15 @@ export default function CheckoutPage() {
                                 <span className="font-bold">${subtotal.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-muted-foreground font-medium flex items-center gap-1.5">
-                                    <Truck className="h-3.5 w-3.5" />
-                                    Shipping
+                                <span className="text-muted-foreground font-medium flex items-center gap-1.5 line-clamp-1 flex-1">
+                                    <Truck className="h-3.5 w-3.5 shrink-0" />
+                                    <span>
+                                        Shipping {selectedRate ? `(${selectedRate.name})` : (customerZip ? "(No match found)" : "(Enter postcode)")}
+                                    </span>
                                 </span>
-                                <span className="font-bold">${shipping.toFixed(2)}</span>
+                                <span className={cn("font-bold shrink-0 ml-2", !selectedRate && "text-muted-foreground italic text-xs")}>
+                                    {selectedRate ? (shippingCost > 0 ? `$${shippingCost.toFixed(2)}` : "FREE") : "—"}
+                                </span>
                             </div>
                             {discount > 0 && (
                                 <div className="flex justify-between text-green-600 font-bold">
@@ -286,6 +500,8 @@ export default function CheckoutPage() {
 
                         <input type="hidden" name="discount" value={discount} />
                         <input type="hidden" name="couponCode" value={couponCode} />
+                        <input type="hidden" name="shippingRateId" value={selectedRateId} />
+                        <input type="hidden" name="shippingCost" value={shippingCost} />
 
                         {error && (
                             <div className="p-4 rounded-xl bg-destructive/5 text-destructive border border-destructive/10 text-xs font-bold mb-6">

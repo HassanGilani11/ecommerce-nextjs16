@@ -12,6 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getCurrentProfile, updateUser, uploadAvatar } from "@/app/actions/admin-users"
 import { toast } from "sonner"
 import { MediaGalleryModal } from "@/components/admin/media-gallery-modal"
+import { cn } from "@/lib/utils"
+import { Separator } from "@/components/ui/separator"
 
 export default function ProfilePage() {
     const router = useRouter()
@@ -32,6 +34,7 @@ export default function ProfilePage() {
         last_name: "",
         avatar_url: "",
         post_count: 0,
+        color_scheme: "default",
         created_at: new Date().toISOString()
     })
 
@@ -52,6 +55,7 @@ export default function ProfilePage() {
                     last_name: data.last_name || "",
                     avatar_url: data.avatar_url || "",
                     post_count: data.post_count || 0,
+                    color_scheme: data.color_scheme || "default",
                     created_at: data.created_at || new Date().toISOString()
                 })
             } else {
@@ -144,151 +148,219 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                 {/* Main Content Area */}
                 <div className="lg:col-span-2 space-y-10">
-                    {/* Account Details */}
                     <Card className="border-none shadow-[0_8px_40px_rgb(0,0,0,0.03)] rounded-[2.5rem] bg-white overflow-hidden">
-                        <CardHeader className="border-b border-zinc-50 px-10 py-6">
-                            <div className="flex items-center gap-4">
-                                <div className="h-10 w-10 rounded-2xl bg-zinc-900 flex items-center justify-center">
-                                    <User className="h-5 w-5 text-white" />
+                        <div className="flex border-b border-zinc-50">
+                            <button
+                                type="button"
+                                className="px-10 py-5 text-xs font-black uppercase tracking-widest border-b-2 border-zinc-900 text-zinc-900 bg-white"
+                            >
+                                Personal Options
+                            </button>
+                            <button
+                                type="button"
+                                className="px-10 py-5 text-xs font-black uppercase tracking-widest border-b-2 border-transparent text-zinc-400 hover:text-zinc-600 transition-all font-bold"
+                            >
+                                Author SEO
+                            </button>
+                        </div>
+                        <CardContent className="px-10 pb-12 pt-10 space-y-12">
+                            {/* Color Schemes Section */}
+                            <div className="space-y-8">
+                                <div className="space-y-1">
+                                    <h3 className="text-sm font-black uppercase tracking-widest text-zinc-900">Administration Color Scheme</h3>
+                                    <p className="text-xs text-zinc-500 font-medium">Personalize your workspace with a premium palette architecture.</p>
                                 </div>
-                                <CardTitle className="text-2xl font-black tracking-tight">Account Identity</CardTitle>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="px-10 pb-12 pt-6 space-y-8">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-3">
-                                    <Label htmlFor="username" className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">
-                                        Username <span className="text-rose-500">*</span>
-                                    </Label>
-                                    <div className="relative group">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 font-bold text-sm">@</span>
-                                        <Input
-                                            id="username"
-                                            value={formData.username || ""}
-                                            readOnly
-                                            className="h-14 pl-10 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-0 font-bold text-zinc-500 cursor-not-allowed transition-all"
-                                        />
-                                        <Lock className="absolute right-5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-300" />
-                                    </div>
-                                </div>
-                                <div className="space-y-3">
-                                    <Label htmlFor="email" className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">
-                                        Email Address <span className="text-rose-500">*</span>
-                                    </Label>
-                                    <div className="relative group">
-                                        <Mail className="absolute left-5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-zinc-400" />
-                                        <Input
-                                            id="email"
-                                            type="email"
-                                            value={formData.email || ""}
-                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                            className="h-14 pl-14 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-zinc-200 font-bold text-zinc-900 transition-all group-hover:bg-zinc-50"
-                                        />
-                                    </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                                    {[
+                                        { id: "default", name: "Default", colors: ["#18181b", "#3f3f46", "#3b82f6", "#60a5fa"] },
+                                        { id: "light", name: "Light", colors: ["#f4f4f5", "#a1a1aa", "#f97316", "#06b6d4"] },
+                                        { id: "modern", name: "Modern", colors: ["#18181b", "#18181b", "#3b82f6", "#7c3aed"] },
+                                        { id: "blue", name: "Blue", colors: ["#0e7490", "#22d3ee", "#67e8f9", "#a5f3fc"] },
+                                        { id: "coffee", name: "Coffee", colors: ["#44403c", "#78716c", "#d6d3d1", "#a8a29e"] },
+                                        { id: "ectoplasm", name: "Ectoplasm", colors: ["#4c1d95", "#7c3aed", "#a3e635", "#f97316"] },
+                                        { id: "midnight", name: "Midnight", colors: ["#18181b", "#334155", "#64748b", "#f43f5e"] },
+                                        { id: "ocean", name: "Ocean", colors: ["#64748b", "#475569", "#d1d5db", "#c2410c"] },
+                                        { id: "sunrise", name: "Sunrise", colors: ["#b91c1c", "#dc2626", "#ea580c", "#d97706"] },
+                                    ].map((scheme) => (
+                                        <label
+                                            key={scheme.id}
+                                            className={cn(
+                                                "relative flex flex-col gap-3 p-1 cursor-pointer group transition-all rounded-xl",
+                                                formData.color_scheme === scheme.id ? "ring-2 ring-zinc-900 ring-offset-4" : "opacity-70 hover:opacity-100"
+                                            )}
+                                        >
+                                            <div className="flex items-center gap-3 px-1">
+                                                <div className={cn(
+                                                    "h-4 w-4 rounded-full border-2 flex items-center justify-center transition-all",
+                                                    formData.color_scheme === scheme.id ? "border-zinc-900 bg-zinc-900" : "border-zinc-300 bg-white"
+                                                )}>
+                                                    {formData.color_scheme === scheme.id && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                                                </div>
+                                                <input
+                                                    type="radio"
+                                                    name="color_scheme"
+                                                    value={scheme.id}
+                                                    checked={formData.color_scheme === scheme.id}
+                                                    onChange={(e) => setFormData({ ...formData, color_scheme: e.target.value })}
+                                                    className="sr-only"
+                                                />
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-zinc-900">{scheme.name}</span>
+                                            </div>
+                                            <div className="flex h-8 w-full rounded-md overflow-hidden shadow-sm border border-zinc-100">
+                                                {scheme.colors.map((color, idx) => (
+                                                    <div key={idx} className="flex-1" style={{ backgroundColor: color }} />
+                                                ))}
+                                            </div>
+                                        </label>
+                                    ))}
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-3">
-                                    <Label htmlFor="password" className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">
-                                        Set New Password
-                                    </Label>
-                                    <div className="relative group">
-                                        <Lock className="absolute left-5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-zinc-400" />
-                                        <Input
-                                            id="password"
-                                            type="password"
-                                            value={formData.password}
-                                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                            placeholder="••••••••"
-                                            className="h-14 pl-14 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-zinc-200 font-bold text-zinc-900 transition-all group-hover:bg-zinc-50"
-                                        />
-                                    </div>
-                                    <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest ml-1">Leave blank to keep current password</p>
-                                </div>
-                                <div className="space-y-3">
-                                    <Label htmlFor="website" className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Website</Label>
-                                    <div className="relative group">
-                                        <Globe className="absolute left-5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-zinc-400" />
-                                        <Input
-                                            id="website"
-                                            value={formData.website || ""}
-                                            onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                                            placeholder="https://yourportfolio.com"
-                                            className="h-14 pl-14 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-zinc-200 font-bold text-zinc-900 transition-all group-hover:bg-zinc-50"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
+                            <Separator className="bg-zinc-50" />
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-3">
-                                    <Label htmlFor="firstName" className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">First Name</Label>
-                                    <Input
-                                        id="firstName"
-                                        value={formData.first_name || ""}
-                                        onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                                        className="h-14 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-zinc-200 font-bold text-zinc-900 transition-all"
+                            <div className="space-y-8">
+                                <div className="flex items-center gap-4">
+                                    <div className="h-10 w-10 rounded-2xl bg-zinc-900 flex items-center justify-center">
+                                        <User className="h-5 w-5 text-white" />
+                                    </div>
+                                    <CardTitle className="text-2xl font-black tracking-tight">Account Identity</CardTitle>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-3">
+                                        <Label htmlFor="username" className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">
+                                            Username <span className="text-rose-500">*</span>
+                                        </Label>
+                                        <div className="relative group">
+                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 font-bold text-sm">@</span>
+                                            <Input
+                                                id="username"
+                                                value={formData.username || ""}
+                                                readOnly
+                                                className="h-14 pl-10 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-0 font-bold text-zinc-500 cursor-not-allowed transition-all"
+                                            />
+                                            <Lock className="absolute right-5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-300" />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-3">
+                                        <Label htmlFor="email" className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">
+                                            Email Address <span className="text-rose-500">*</span>
+                                        </Label>
+                                        <div className="relative group">
+                                            <Mail className="absolute left-5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-zinc-400" />
+                                            <Input
+                                                id="email"
+                                                type="email"
+                                                value={formData.email || ""}
+                                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                                className="h-14 pl-14 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-zinc-200 font-bold text-zinc-900 transition-all group-hover:bg-zinc-50"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-3">
+                                        <Label htmlFor="password" className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">
+                                            Set New Password
+                                        </Label>
+                                        <div className="relative group">
+                                            <Lock className="absolute left-5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-zinc-400" />
+                                            <Input
+                                                id="password"
+                                                type="password"
+                                                value={formData.password}
+                                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                                placeholder="••••••••"
+                                                className="h-14 pl-14 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-zinc-200 font-bold text-zinc-900 transition-all group-hover:bg-zinc-50"
+                                            />
+                                        </div>
+                                        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest ml-1">Leave blank to keep current password</p>
+                                    </div>
+                                    <div className="space-y-3">
+                                        <Label htmlFor="website" className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Website</Label>
+                                        <div className="relative group">
+                                            <Globe className="absolute left-5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-zinc-400" />
+                                            <Input
+                                                id="website"
+                                                value={formData.website || ""}
+                                                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                                                placeholder="https://yourportfolio.com"
+                                                className="h-14 pl-14 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-zinc-200 font-bold text-zinc-900 transition-all group-hover:bg-zinc-50"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-3">
+                                        <Label htmlFor="firstName" className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">First Name</Label>
+                                        <Input
+                                            id="firstName"
+                                            value={formData.first_name || ""}
+                                            onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                                            className="h-14 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-zinc-200 font-bold text-zinc-900 transition-all"
+                                        />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <Label htmlFor="lastName" className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Last Name</Label>
+                                        <Input
+                                            id="lastName"
+                                            value={formData.last_name || ""}
+                                            onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                                            className="h-14 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-zinc-200 font-bold text-zinc-900 transition-all"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Profile Avatar</Label>
+                                    <div className="flex flex-col sm:flex-row gap-8 items-start sm:items-center">
+                                        {formData.avatar_url ? (
+                                            <div className="group relative rounded-[2.5rem] overflow-hidden aspect-square w-32 border-4 border-white shadow-xl bg-zinc-50 flex-shrink-0">
+                                                <img src={formData.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-2">
+                                                    <Button type="button" size="sm" variant="secondary" onClick={() => setIsGalleryOpen(true)} className="rounded-full font-black text-[9px] uppercase tracking-[0.2em] h-7">
+                                                        Change
+                                                    </Button>
+                                                    <Button type="button" size="sm" variant="destructive" onClick={() => setFormData({ ...formData, avatar_url: "" })} className="rounded-full h-7 w-7 p-0">
+                                                        <X className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div
+                                                onClick={() => setIsGalleryOpen(true)}
+                                                className="border-2 border-dashed border-zinc-200 rounded-[2.5rem] w-32 aspect-square flex flex-col items-center justify-center p-4 text-center hover:bg-zinc-50 hover:border-zinc-300 transition-all cursor-pointer group flex-shrink-0"
+                                            >
+                                                <div className="h-10 w-10 bg-zinc-50 rounded-2xl flex items-center justify-center mb-2 transition-transform group-hover:scale-110">
+                                                    <ImagePlus className="h-5 w-5 text-zinc-400" />
+                                                </div>
+                                                <p className="text-[8px] font-black text-zinc-900 uppercase tracking-widest leading-tight">Upload</p>
+                                            </div>
+                                        )}
+                                        <div className="flex-1 w-full space-y-4">
+                                            <p className="text-xs text-zinc-500 font-medium leading-relaxed">
+                                                Update your circular avatar here. You can pick an image from your e-commerce media gallery or upload a new one directly.
+                                            </p>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                className="h-11 px-6 rounded-2xl border-zinc-100 text-[10px] font-black uppercase tracking-widest hover:bg-white shadow-sm flex items-center gap-2"
+                                                onClick={() => setIsGalleryOpen(true)}
+                                            >
+                                                <Upload className="h-4 w-4 mr-1" />
+                                                Open Media Gallery
+                                            </Button>
+                                        </div>
+                                    </div>
+                                    <MediaGalleryModal
+                                        open={isGalleryOpen}
+                                        onOpenChange={setIsGalleryOpen}
+                                        onSelect={(url) => setFormData({ ...formData, avatar_url: url })}
+                                        bucket="profile"
                                     />
                                 </div>
-                                <div className="space-y-3">
-                                    <Label htmlFor="lastName" className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Last Name</Label>
-                                    <Input
-                                        id="lastName"
-                                        value={formData.last_name || ""}
-                                        onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                                        className="h-14 rounded-2xl border-zinc-100 bg-zinc-50/50 focus-visible:ring-zinc-200 font-bold text-zinc-900 transition-all"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 ml-1">Profile Avatar</Label>
-                                <div className="flex flex-col sm:flex-row gap-8 items-start sm:items-center">
-                                    {formData.avatar_url ? (
-                                        <div className="group relative rounded-[2.5rem] overflow-hidden aspect-square w-32 border-4 border-white shadow-xl bg-zinc-50 flex-shrink-0">
-                                            <img src={formData.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-                                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-2">
-                                                <Button type="button" size="sm" variant="secondary" onClick={() => setIsGalleryOpen(true)} className="rounded-full font-black text-[9px] uppercase tracking-[0.2em] h-7">
-                                                    Change
-                                                </Button>
-                                                <Button type="button" size="sm" variant="destructive" onClick={() => setFormData({ ...formData, avatar_url: "" })} className="rounded-full h-7 w-7 p-0">
-                                                    <X className="h-3.5 w-3.5" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div
-                                            onClick={() => setIsGalleryOpen(true)}
-                                            className="border-2 border-dashed border-zinc-200 rounded-[2.5rem] w-32 aspect-square flex flex-col items-center justify-center p-4 text-center hover:bg-zinc-50 hover:border-zinc-300 transition-all cursor-pointer group flex-shrink-0"
-                                        >
-                                            <div className="h-10 w-10 bg-zinc-50 rounded-2xl flex items-center justify-center mb-2 transition-transform group-hover:scale-110">
-                                                <ImagePlus className="h-5 w-5 text-zinc-400" />
-                                            </div>
-                                            <p className="text-[8px] font-black text-zinc-900 uppercase tracking-widest leading-tight">Upload</p>
-                                        </div>
-                                    )}
-                                    <div className="flex-1 w-full space-y-4">
-                                        <p className="text-xs text-zinc-500 font-medium leading-relaxed">
-                                            Update your circular avatar here. You can pick an image from your e-commerce media gallery or upload a new one directly.
-                                        </p>
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            className="h-11 px-6 rounded-2xl border-zinc-100 text-[10px] font-black uppercase tracking-widest hover:bg-white shadow-sm flex items-center gap-2"
-                                            onClick={() => setIsGalleryOpen(true)}
-                                        >
-                                            <Upload className="h-4 w-4 mr-1" />
-                                            Open Media Gallery
-                                        </Button>
-                                    </div>
-                                </div>
-                                <MediaGalleryModal
-                                    open={isGalleryOpen}
-                                    onOpenChange={setIsGalleryOpen}
-                                    onSelect={(url) => setFormData({ ...formData, avatar_url: url })}
-                                    bucket="profile"
-                                />
                             </div>
                         </CardContent>
                     </Card>
@@ -354,6 +426,6 @@ export default function ProfilePage() {
                     </Card>
                 </div>
             </div>
-        </form>
+        </form >
     )
 }

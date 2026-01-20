@@ -87,7 +87,8 @@ export async function updateUser(id: string, updates: any) {
         first_name,
         last_name,
         avatar_url,
-        post_count
+        post_count,
+        color_scheme
     } = updates
 
     const cleanUpdates = {
@@ -100,7 +101,8 @@ export async function updateUser(id: string, updates: any) {
         first_name,
         last_name,
         avatar_url,
-        post_count
+        post_count,
+        color_scheme
     }
 
     const { error } = await supabase
@@ -162,7 +164,8 @@ export async function createUser(data: any) {
         avatar_url,
         post_count,
         role,
-        status
+        status,
+        color_scheme
     } = data
 
     let userId: string
@@ -246,7 +249,8 @@ export async function createUser(data: any) {
         avatar_url,
         post_count: post_count || 0,
         role: role || 'customer',
-        status: status || 'active'
+        status: status || 'active',
+        color_scheme: color_scheme || 'default'
     }
 
     const { error: profileError } = await supabase

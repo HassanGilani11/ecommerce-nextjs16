@@ -17,7 +17,7 @@ export async function updateSettings(prevState: any, formData: FormData) {
     // 2. Extract fields from formData
     const textFields = [
         "site_title", "site_tagline", "admin_email", "default_role",
-        "timezone", "date_format", "time_format", "favicon_url",
+        "timezone", "date_format", "time_format", "favicon_url", "logo_url",
         "meta_title", "meta_description", "meta_keywords",
         "facebook_url", "twitter_url", "instagram_url", "linkedin_url"
     ]

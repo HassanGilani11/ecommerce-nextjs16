@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ShoppingCart, Menu, Search, User, Home, ShoppingBag, Shirt, Watch, Footprints, X, Package } from "lucide-react"
+import { ShoppingCart, Menu, Search, User, Home, ShoppingBag, Shirt, Watch, Footprints, X, Package, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
     Sheet,
@@ -102,9 +102,13 @@ function SearchDialog() {
     )
 }
 
-export function NavbarClient({ settings, categories }: { settings: any, categories: any[] }) {
+export function NavbarClient({ settings, categories, user }: { settings: any, categories: any[], user?: any }) {
     const pathname = usePathname()
     const { totalItems } = useCart()
+
+    const accountHref = user
+        ? (user.role === 'admin' ? "/admin" : "/profile")
+        : "/login"
 
     // Map static and dynamic items
     const navItems = [
@@ -121,8 +125,12 @@ export function NavbarClient({ settings, categories }: { settings: any, categori
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container mx-auto flex h-14 sm:h-16 items-center justify-between px-4">
                 <div className="flex items-center gap-4 sm:gap-8">
-                    <Link href="/" className="text-lg sm:text-xl font-bold tracking-tighter hover:text-primary transition-colors">
-                        {settings?.site_title || "AVANT-GARDE"}
+                    <Link href="/" className="flex items-center gap-2 text-lg sm:text-xl font-bold tracking-tighter hover:text-primary transition-colors">
+                        {settings?.logo_url ? (
+                            <img src={settings.logo_url} alt={settings?.site_title || "AVANT-GARDE"} className="h-8 w-auto object-contain" />
+                        ) : (
+                            settings?.site_title || "AVANT-GARDE"
+                        )}
                     </Link>
                     <nav className="hidden lg:flex gap-6">
                         {navItems.map((item) => (
@@ -140,10 +148,10 @@ export function NavbarClient({ settings, categories }: { settings: any, categori
 
                 <div className="flex items-center gap-1 sm:gap-2">
                     <SearchDialog />
-                    <Link href="/login" className="hidden sm:flex">
+                    <Link href={accountHref} className="hidden sm:flex" id="account-link">
                         <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
                             <User className="h-4 w-4 sm:h-5 sm:w-5" />
-                            <span className="sr-only">Account</span>
+                            <span className="sr-only">{user ? "Account" : "Login"}</span>
                         </Button>
                     </Link>
                     <Link href="/cart">
@@ -168,7 +176,11 @@ export function NavbarClient({ settings, categories }: { settings: any, categori
                         <SheetContent side="right" className="w-[300px] sm:w-[350px] pr-0 rounded-l-[2.5rem] border-l-0 shadow-2xl">
                             <SheetHeader className="px-6 text-left py-6">
                                 <SheetTitle className="text-2xl font-black tracking-tighter">
-                                    {settings?.site_title || "AVANT-GARDE"}
+                                    {settings?.logo_url ? (
+                                        <img src={settings.logo_url} alt={settings?.site_title || "AVANT-GARDE"} className="h-10 w-auto object-contain" />
+                                    ) : (
+                                        settings?.site_title || "AVANT-GARDE"
+                                    )}
                                 </SheetTitle>
                             </SheetHeader>
                             <div className="flex flex-col h-full py-2">
@@ -181,8 +193,8 @@ export function NavbarClient({ settings, categories }: { settings: any, categori
                                                 key={item.href}
                                                 href={item.href}
                                                 className={`flex items-center gap-4 px-4 py-4 rounded-3xl transition-all duration-300 group ${pathname === item.href
-                                                        ? "bg-zinc-900 text-white shadow-xl shadow-zinc-200"
-                                                        : "hover:bg-zinc-50 text-muted-foreground hover:text-zinc-900"
+                                                    ? "bg-zinc-900 text-white shadow-xl shadow-zinc-200"
+                                                    : "hover:bg-zinc-50 text-muted-foreground hover:text-zinc-900"
                                                     }`}
                                             >
                                                 <Icon className={`h-5 w-5 ${pathname === item.href ? "text-white" : "group-hover:scale-110 transition-transform"}`} />
@@ -195,14 +207,26 @@ export function NavbarClient({ settings, categories }: { settings: any, categori
                                         <Separator className="bg-zinc-100" />
                                     </div>
 
-                                    <div className="px-4 py-3 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Profile</div>
+                                    <div className="px-4 py-3 text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">{user ? "Session" : "Profile"}</div>
                                     <Link
-                                        href="/login"
+                                        href={accountHref}
                                         className="flex items-center gap-4 px-4 py-4 rounded-3xl hover:bg-zinc-50 text-muted-foreground hover:text-zinc-900 transition-all font-bold text-sm uppercase tracking-widest"
                                     >
                                         <User className="h-5 w-5" />
-                                        Account
+                                        {user ? "Dashboard" : "Account"}
                                     </Link>
+                                    {user && (
+                                        <button
+                                            onClick={async () => {
+                                                const { logout } = await import("@/app/(main)/(auth)/logout/actions")
+                                                await logout()
+                                            }}
+                                            className="flex items-center gap-4 px-4 py-4 rounded-3xl hover:bg-rose-50 text-rose-500 transition-all font-bold text-sm uppercase tracking-widest"
+                                        >
+                                            <LogOut className="h-5 w-5" />
+                                            Log Out
+                                        </button>
+                                    )}
                                 </nav>
 
                                 <div className="mt-auto px-6 py-10">

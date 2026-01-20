@@ -44,6 +44,7 @@ const initialState: { error?: string; success?: string } = {}
 export default function SettingsForm({ settings }: { settings: any }) {
     const [state, action, isPending] = useActionState(updateSettings, initialState)
     const [isGalleryOpen, setIsGalleryOpen] = useState(false)
+    const [activeAssetField, setActiveAssetField] = useState<"favicon_url" | "logo_url">("favicon_url")
 
     // Controlled form state
     const [formData, setFormData] = useState({
@@ -65,6 +66,7 @@ export default function SettingsForm({ settings }: { settings: any }) {
         maintenance_mode: settings?.maintenance_mode || false,
         enable_registration: settings?.enable_registration || false,
         store_notifications: settings?.store_notifications || false,
+        logo_url: settings?.logo_url || "",
     })
 
     useEffect(() => {
@@ -91,8 +93,9 @@ export default function SettingsForm({ settings }: { settings: any }) {
 
     return (
         <form key={settings?.id + settings?.updated_at} action={action} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Hidden Input for Favicon */}
+            {/* Hidden Inputs for Assets */}
             <input type="hidden" name="favicon_url" value={formData.favicon_url} />
+            <input type="hidden" name="logo_url" value={formData.logo_url} />
 
             {/* Header */}
             <div className="flex items-center justify-between">
@@ -275,9 +278,54 @@ export default function SettingsForm({ settings }: { settings: any }) {
                                 </CardHeader>
                                 <CardContent className="px-8 pb-8 pt-4 space-y-6">
                                     <div className="space-y-2 pt-2">
+                                        <Label className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">Site Logo</Label>
+                                        <div
+                                            onClick={() => {
+                                                setActiveAssetField("logo_url")
+                                                setIsGalleryOpen(true)
+                                            }}
+                                            className="border-2 border-dashed border-zinc-100 rounded-[2rem] p-8 text-center hover:bg-zinc-50/50 transition-colors cursor-pointer group flex flex-col items-center justify-center aspect-video relative overflow-hidden"
+                                        >
+                                            {formData.logo_url ? (
+                                                <>
+                                                    <img src={formData.logo_url} alt="Logo" className="w-full h-full object-contain p-4" />
+                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                                        <div className="h-10 w-10 bg-white rounded-full flex items-center justify-center">
+                                                            <Upload className="h-5 w-5 text-zinc-900" />
+                                                        </div>
+                                                        <Button
+                                                            type="button"
+                                                            size="icon"
+                                                            variant="destructive"
+                                                            className="h-10 w-10 rounded-full"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                setFormData(prev => ({ ...prev, logo_url: "" }))
+                                                            }}
+                                                        >
+                                                            <X className="h-5 w-5" />
+                                                        </Button>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <div className="h-12 w-12 bg-zinc-50 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-sm">
+                                                        <ImagePlus className="h-5 w-5 text-zinc-300" />
+                                                    </div>
+                                                    <p className="text-[10px] font-black text-zinc-900 uppercase tracking-widest">Logo</p>
+                                                    <p className="text-[9px] text-zinc-400 mt-1 uppercase tracking-tighter">Recommended: Wide Aspect Ratio</p>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2 pt-2">
                                         <Label className="text-xs font-black uppercase tracking-widest text-zinc-400 ml-1">Site Icon (Favicon)</Label>
                                         <div
-                                            onClick={() => setIsGalleryOpen(true)}
+                                            onClick={() => {
+                                                setActiveAssetField("favicon_url")
+                                                setIsGalleryOpen(true)
+                                            }}
                                             className="border-2 border-dashed border-zinc-100 rounded-[2rem] p-8 text-center hover:bg-zinc-50/50 transition-colors cursor-pointer group flex flex-col items-center justify-center aspect-square relative overflow-hidden"
                                         >
                                             {formData.favicon_url ? (
@@ -465,7 +513,7 @@ export default function SettingsForm({ settings }: { settings: any }) {
             <MediaGalleryModal
                 open={isGalleryOpen}
                 onOpenChange={setIsGalleryOpen}
-                onSelect={(url) => setFormData(prev => ({ ...prev, favicon_url: url }))}
+                onSelect={(url) => setFormData(prev => ({ ...prev, [activeAssetField]: url }))}
                 bucket="assets"
             />
         </form>
